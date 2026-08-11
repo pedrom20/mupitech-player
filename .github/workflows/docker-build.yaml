@@ -76,10 +76,17 @@ jobs:
       # dedup at the registry level. See refactor: drop celery image.
       fail-fast: false
       matrix:
-        # MupiTech fork: x86 only for now — Pi4/Pi5 come back in
-        # Phase 5 of the custom-image plan, once all four features
-        # (CEC, self-update, screenshot, scheduling) are correct here.
-        board: ['x86']
+        # MupiTech fork: x86 validated first (Phases 0-4); Pi5 and
+        # Pi4-64 added here for Phase 5. Both are already first-class
+        # upstream Anthias build targets (see
+        # tools/image_builder/constants.py), so this is mostly "turn
+        # the matrix back on" rather than new build-system work — our
+        # MupiTech additions (v4l-utils, grim) are already board-aware:
+        # grim only installs on the cage/Wayland boards (x86, arm64,
+        # pi5 — see get_viewer_context in tools/image_builder/utils.py),
+        # so pi4-64 builds fine but /v2/screenshot reports "not
+        # supported" there until the Pi4 kmsgrab/DRM spike lands.
+        board: ['x86', 'pi5', 'pi4-64']
         python-version: ["3.13"]
     runs-on: ubuntu-24.04
 
@@ -242,5 +249,5 @@ jobs:
       - name: Mirror short-hash tags to latest-<board> (GHCR)
         env:
           NAMESPACE: ghcr.io/pedrom20/mupitech-player
-          BOARDS: x86
+          BOARDS: x86 pi5 pi4-64
         run: bash .github/workflows/scripts/mirror-latest-tags.sh

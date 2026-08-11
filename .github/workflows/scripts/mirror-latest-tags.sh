@@ -23,9 +23,10 @@ set -euo pipefail
 : "${NAMESPACE:?NAMESPACE env var must be set}"
 
 GIT_SHORT_HASH=$(git rev-parse --short=7 HEAD)
-# MupiTech fork: only x86 is built so far (Phase 0-4 of the custom-image
-# plan target x86 first; Pi4/Pi5 come back in Phase 5) — override via
-# $BOARDS to restore the full upstream matrix once those boards build.
+# MupiTech fork: docker-build.yaml sets $BOARDS to match its own build
+# matrix (x86, pi5, pi4-64 as of Phase 5). Defaults to x86 only here so
+# a manual run of this script alone doesn't assume boards it hasn't
+# just built.
 read -ra BOARDS <<< "${BOARDS:-x86}"
 SERVICES=(server redis viewer)
 

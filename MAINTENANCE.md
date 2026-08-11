@@ -42,9 +42,10 @@ for the full feature-by-feature breakdown and status. Summary:
   Manager side was adjusted instead.
 - **IR** — not in upstream. Built here, pure Python subprocess wrapper
   around `ir-ctl`, no viewer/Qt changes.
-- **Screenshot** — not in upstream. Board-specific capture logic added
-  here (Wayland/`grim` for x86/Pi5/arm64; DRM-based for Pi4-64; fbdev
-  for Pi2/Pi3).
+- **Screenshot** — not in upstream. Wayland/`grim` capture added here
+  for x86/Pi5/arm64. Pi4-64 (DRM/`kmsgrab`-based) and Pi2/Pi3 (fbdev)
+  are not implemented yet — `/v2/screenshot` reports "not supported"
+  on those boards in the meantime.
 - **Scheduling** — adopted from upstream's own in-progress
   `schedule-slots` branch (per-asset `play_days`/`play_time_from`/
   `play_time_to` fields), not the third-party fork's separate-slots
@@ -55,7 +56,8 @@ for the full feature-by-feature breakdown and status. Summary:
 ## CI
 
 `.github/workflows/docker-build.yaml` builds and publishes to
-`ghcr.io/pedrom20/mupitech-player-*` on push to `mupitech-custom`.
-Currently x86-only; Pi4/Pi5 are added back once the four features
-above are correct and tested on x86 (see the Fleet Manager repo's plan
-for the full phase breakdown).
+`ghcr.io/pedrom20/mupitech-player-*` on push to `mupitech-custom`, for
+`x86`, `pi5` and `pi4-64` (Pi2/Pi3 not built yet — see the Fleet
+Manager repo's plan for the full phase breakdown). Pi5/Pi4-64 images
+build and publish, but haven't yet been validated against real
+hardware — do that before pointing a production device at them.
