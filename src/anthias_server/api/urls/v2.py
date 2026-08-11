@@ -4,6 +4,7 @@ from django.urls import URLPattern, URLResolver, path
 # and two path() entries below so upstream merges never touch this file
 # beyond these two small, easy-to-reapply hunks.
 from anthias_server.api.views.mupitech_ir import IrStatusViewV2, IrTestViewV2
+from anthias_server.api.views.mupitech_update import TriggerUpdateViewV2
 from anthias_server.api.views.v2 import (
     AssetContentViewV2,
     AssetListViewV2,
@@ -57,10 +58,11 @@ def get_url_patterns() -> list[URLPattern | URLResolver]:
             DisplayPowerViewV2.as_view(),
             name='display_power_v2',
         ),
-        # MupiTech addition (not upstream Anthias) — see
-        # api/views/mupitech_ir.py.
+        # MupiTech additions (not upstream Anthias) — see
+        # api/views/mupitech_ir.py and api/views/mupitech_update.py.
         path('v2/ir/status', IrStatusViewV2.as_view(), name='ir_status_v2'),
         path('v2/ir/test', IrTestViewV2.as_view(), name='ir_test_v2'),
+        path('v2/update', TriggerUpdateViewV2.as_view(), name='trigger_update_v2'),
         path('v2/file_asset', FileAssetViewV2.as_view(), name='file_asset_v2'),
         path(
             'v2/assets/<str:asset_id>/content',
