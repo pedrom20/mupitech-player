@@ -42,10 +42,11 @@ for the full feature-by-feature breakdown and status. Summary:
   Manager side was adjusted instead.
 - **IR** — not in upstream. Built here, pure Python subprocess wrapper
   around `ir-ctl`, no viewer/Qt changes.
-- **Screenshot** — not in upstream. Wayland/`grim` capture added here
-  for x86/Pi5/arm64. Pi4-64 (DRM/`kmsgrab`-based) and Pi2/Pi3 (fbdev)
-  are not implemented yet — `/v2/screenshot` reports "not supported"
-  on those boards in the meantime.
+- **Screenshot** — not in upstream. Wayland/`grim` capture for
+  x86/Pi5/arm64; eglfs/`ffmpeg -f kmsgrab` capture for Pi4-64/Pi3-64
+  (reads the scanout framebuffer read-only, doesn't need DRM master —
+  coexists fine with the webview process holding it). Pi2/Pi3 (fbdev)
+  not implemented yet — `/v2/screenshot` reports "not supported" there.
 - **Scheduling** — adopted from upstream's own in-progress
   `schedule-slots` branch (per-asset `play_days`/`play_time_from`/
   `play_time_to` fields), not the third-party fork's separate-slots

@@ -83,9 +83,10 @@ jobs:
         # the matrix back on" rather than new build-system work — our
         # MupiTech additions (v4l-utils, grim) are already board-aware:
         # grim only installs on the cage/Wayland boards (x86, arm64,
-        # pi5 — see get_viewer_context in tools/image_builder/utils.py),
-        # so pi4-64 builds fine but /v2/screenshot reports "not
-        # supported" there until the Pi4 kmsgrab/DRM spike lands.
+        # pi5 — see get_viewer_context in tools/image_builder/utils.py).
+        # pi4-64 captures screenshots via ffmpeg kmsgrab instead (ffmpeg
+        # is already a shared base dependency on every board) — see
+        # anthias_viewer/mupitech_screenshot_eglfs.py.
         board: ['x86', 'pi5', 'pi4-64']
         python-version: ["3.13"]
     runs-on: ubuntu-24.04
