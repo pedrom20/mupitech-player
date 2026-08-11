@@ -205,7 +205,7 @@ def build_image(
         # right one. If the namespaces list changes in the future, this
         # ref needs to move with it.
         cache_ref = (
-            f'ghcr.io/screenly/anthias-{service}:buildcache-{cache_scope}'
+            f'ghcr.io/pedrom20/mupitech-player-{service}:buildcache-{cache_scope}'
         )
         # Reads are always safe — anthias-* GHCR packages are public,
         # so cache_from works without auth (matters for someone
@@ -327,7 +327,7 @@ def build_image(
         '$XDG_CACHE_HOME/anthias-buildx/<board>/ (typically '
         '~/.cache/anthias-buildx/) and is right for local dev. '
         '`registry` pushes the cache to '
-        'ghcr.io/screenly/anthias-<service>:buildcache-<board> for '
+        'ghcr.io/pedrom20/mupitech-player-<service>:buildcache-<board> for '
         'CI — reuses the GHCR login already done by the workflow, '
         'no extra tokens needed. Override via $BUILDX_CACHE_BACKEND.'
     ),
@@ -371,12 +371,10 @@ def main(
         # the migration window so devices that haven't yet picked up the
         # template flip keep getting `latest-*` advanced.
         #
-        # The legacy `screenly/srly-ose-*` namespace was dropped: every
-        # device that has run `upgrade_containers.sh` since 2023-02
-        # (b9998438) is on `screenly/anthias-*`, and stale `srly-ose-*`
-        # `latest-*` mirroring (one of two reasons d568602 hit Docker
-        # Hub's 429) gives no real back-compat in exchange.
-        namespaces = ['ghcr.io/screenly/anthias', 'screenly/anthias']
+        # MupiTech fork: publish only to our own GHCR namespace, no
+        # Docker Hub mirror (that was Screenly's own dual-registry
+        # migration strategy, not relevant to a private fleet).
+        namespaces = ['ghcr.io/pedrom20/mupitech-player']
 
         # Generate all tags
         docker_tags = []

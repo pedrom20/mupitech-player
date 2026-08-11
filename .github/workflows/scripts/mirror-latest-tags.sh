@@ -23,7 +23,10 @@ set -euo pipefail
 : "${NAMESPACE:?NAMESPACE env var must be set}"
 
 GIT_SHORT_HASH=$(git rev-parse --short=7 HEAD)
-BOARDS=(pi2 pi3 pi3-64 pi4-64 pi5 x86 arm64)
+# MupiTech fork: only x86 is built so far (Phase 0-4 of the custom-image
+# plan target x86 first; Pi4/Pi5 come back in Phase 5) — override via
+# $BOARDS to restore the full upstream matrix once those boards build.
+read -ra BOARDS <<< "${BOARDS:-x86}"
 SERVICES=(server redis viewer)
 
 retry() {
