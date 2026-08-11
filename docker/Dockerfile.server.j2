@@ -49,6 +49,14 @@ RUN bun run build
 
 {% include 'Dockerfile.base.j2' %}
 
+# MupiTech addition (not upstream Anthias): v4l-utils provides ir-ctl,
+# used by anthias_server/lib/mupitech_ir.py. Kept as its own isolated
+# RUN block, right after the shared base include, so upstream merges
+# only ever need to re-apply this one small hunk.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends v4l-utils && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=uv-builder /venv /venv
 ENV PATH="/venv/bin:$PATH"
 ENV VIRTUAL_ENV="/venv"
