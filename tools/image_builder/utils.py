@@ -352,6 +352,11 @@ def get_viewer_context(board: str, target_platform: str) -> dict[str, Any]:
                     'cage',
                     'qt6-wayland',
                     'wlr-randr',
+                    # MupiTech addition (not upstream Anthias): grim
+                    # captures cage's compositor output via
+                    # wlr_screencopy_manager_v1 for the screenshot
+                    # feature (anthias_viewer/mupitech_screenshot.py).
+                    'grim',
                 ]
             )
 

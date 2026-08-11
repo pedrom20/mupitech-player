@@ -721,6 +721,24 @@ def send_current_asset_id_to_server(correlation_id: str | None) -> None:
     )
 
 
+def send_screenshot_to_server(correlation_id: str | None) -> None:
+    """MupiTech addition (not upstream Anthias) — see mupitech_screenshot.py."""
+    if not correlation_id:
+        logger.warning(
+            'screenshot command received without a correlation ID; '
+            'dropping reply.'
+        )
+        return
+
+    from anthias_viewer.mupitech_screenshot import capture_screenshot_b64
+
+    ok, result = capture_screenshot_b64()
+    if ok:
+        reply_sender.send(correlation_id, {'success': True, 'png_base64': result})
+    else:
+        reply_sender.send(correlation_id, {'success': False, 'error': result})
+
+
 def blank_display() -> None:
     """Handle the ``blank`` command: darken the screen and pause playback.
 
@@ -784,6 +802,8 @@ commands = {
     'unblank': lambda _: unblank_display(),
     'unknown': lambda _: command_not_found(),
     'current_asset_id': lambda corr: send_current_asset_id_to_server(corr),
+    # MupiTech addition (not upstream Anthias) — see mupitech_screenshot.py.
+    'screenshot': lambda corr: send_screenshot_to_server(corr),
 }
 
 
