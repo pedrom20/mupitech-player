@@ -1,25 +1,28 @@
-// MupiTech boot splash — animated "breathing glow" logo. Same overall
-// structure as the previous static-image script (scale-to-fit against
-// the real screen size, plus the status-text callback for the rare
-// messages Plymouth itself posts, e.g. during an fsck), but the single
-// static image is replaced with a small looped sequence of frames that
-// only differ in the glow behind the mark, so the panel reads as
-// gently "lighting up" while the device boots.
+// MupiTech boot splash — animated "breathing glow" logo, plus a small
+// rotating ring beneath it (Windows-11-style "still working" spinner)
+// so the panel reads as actively booting rather than a static, possibly
+// stalled image. Same overall approach for both: scale-to-fit against
+// the real screen size, then cycle a pre-rendered frame sequence — the
+// spinner is pre-rendered rather than rotated live via Image.Rotate()
+// to stick to only the Image/Sprite APIs already proven to work in this
+// exact Plymouth build (see the breathing-glow frames below).
 
 screen_width = Window.GetWidth();
 screen_height = Window.GetHeight();
 
-num_frames = 16;
+num_frames = 32;
 
 // How many refresh callbacks to wait between animation frames. Plymouth
 // calls the refresh function far more often than we want a new frame
 // (commonly tied to the compositor's own refresh rate), so without this
-// throttle the 16-frame loop would cycle multiple times a second instead
-// of reading as a slow, calm pulse. 6 was picked to land close to the
-// ~2s breathing cycle the frames were rendered for; there's no reliable
-// way to query the actual callback rate from script, so this is a
-// reasonable fixed estimate rather than a measured value.
-ticks_per_frame = 6;
+// throttle the frame loop would cycle multiple times a second instead
+// of reading as a slow, calm pulse. Frame count was doubled from 16 to
+// 32 for a smoother pulse (less "jumpy" at each step); ticks_per_frame
+// halved from 6 to 3 alongside it, so the total breathing cycle length
+// (~2s) is unchanged — only its resolution improved. There's no
+// reliable way to query the actual callback rate from script, so this
+// stays a fixed estimate rather than a measured value.
+ticks_per_frame = 3;
 
 frame_image[0] = Image("frame-00.png");
 image_width = frame_image[0].GetWidth();
@@ -65,6 +68,46 @@ if (Plymouth.GetMode() != "shutdown")
 	sprite.SetPosition(image_x, image_y, -100);
 }
 
+// Rotating ring, positioned below the logo lockup. Expressed as
+// fractions of the *original* 3840x2160 canvas (matching where the
+// asset was designed against the tagline underneath the logo), then
+// mapped through the same scale_x/scale_y + image_x/image_y letterbox
+// math as the logo above so it stays proportionally placed on any
+// actual screen size/aspect ratio.
+spinner_num_frames = 30;
+spinner_ticks_per_frame = 2;
+
+spinner_center_x_frac = 0.5;
+spinner_center_y_frac = 1780 / image_height;
+spinner_diam_frac = 260 / image_height;
+
+spinner_center_x = image_x + spinner_center_x_frac * scaled_width;
+spinner_center_y = image_y + spinner_center_y_frac * scaled_height;
+spinner_diam = spinner_diam_frac * scaled_height;
+spinner_x = spinner_center_x - spinner_diam / 2;
+spinner_y = spinner_center_y - spinner_diam / 2;
+
+spinner_image[0] = Image("spinner-00.png").Scale(spinner_diam, spinner_diam);
+i = 1;
+while (i < spinner_num_frames)
+{
+	if (i < 10)
+		spinner_image[i] = Image("spinner-0" + i + ".png");
+	else
+		spinner_image[i] = Image("spinner-" + i + ".png");
+	spinner_image[i] = spinner_image[i].Scale(spinner_diam, spinner_diam);
+	i++;
+}
+
+spinner_frame_index = 0;
+spinner_tick_count = 0;
+
+if (Plymouth.GetMode() != "shutdown")
+{
+	spinner_sprite = Sprite(spinner_image[0]);
+	spinner_sprite.SetPosition(spinner_x, spinner_y, -90);
+}
+
 message_sprite = Sprite();
 message_sprite.SetPosition(screen_width * 0.1, screen_height * 0.9, 10000);
 
@@ -79,16 +122,33 @@ fun refresh_callback()
 	if (Plymouth.GetMode() == "shutdown")
 		return;
 
+	// Each animation has its own throttle, checked independently — an
+	// early return here for one would also skip the other, tying the
+	// spinner to the logo's slow breathing cadence instead of letting
+	// it spin at its own, brisker pace.
 	tick_count++;
-	if (tick_count < ticks_per_frame)
-		return;
-	tick_count = 0;
+	if (tick_count >= ticks_per_frame)
+	{
+		tick_count = 0;
 
-	frame_index++;
-	if (frame_index >= num_frames)
-		frame_index = 0;
+		frame_index++;
+		if (frame_index >= num_frames)
+			frame_index = 0;
 
-	sprite.SetImage(frame_image[frame_index]);
+		sprite.SetImage(frame_image[frame_index]);
+	}
+
+	spinner_tick_count++;
+	if (spinner_tick_count >= spinner_ticks_per_frame)
+	{
+		spinner_tick_count = 0;
+
+		spinner_frame_index++;
+		if (spinner_frame_index >= spinner_num_frames)
+			spinner_frame_index = 0;
+
+		spinner_sprite.SetImage(spinner_image[spinner_frame_index]);
+	}
 }
 
 Plymouth.SetUpdateStatusFunction(message_callback);
