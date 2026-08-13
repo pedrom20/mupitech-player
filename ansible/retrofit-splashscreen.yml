@@ -1,0 +1,20 @@
+---
+# Retrofits the MupiTech Plymouth boot splash onto a device that was
+# provisioned/migrated via the Fleet Manager's SSH+Docker flow (which
+# only touches Docker/compose, never the OS image) instead of built from
+# a fresh image via site.yml — e.g. VM-TESTE and any other pre-existing
+# box whose OS predates the splashscreen role being added.
+#
+# Deliberately scoped to just this one role: running the full site.yml
+# against an already-configured production device would also touch
+# system/anthias/network, which is not what we want for a retrofit.
+#
+# Usage (from a control machine with SSH access to the target, ansible
+# installed via `brew install ansible` or similar):
+#   ansible-playbook -i "<device-ip>," -u <ssh_user> --ask-become-pass \
+#     ansible/retrofit-splashscreen.yml
+- name: Retrofit MupiTech Plymouth boot splash
+  hosts: all
+  become: true
+  roles:
+    - splashscreen
