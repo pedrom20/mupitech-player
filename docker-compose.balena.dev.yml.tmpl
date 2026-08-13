@@ -3,7 +3,7 @@
 version: "2"
 services:
   anthias-server:
-    image: ghcr.io/screenly/anthias-server:${GIT_SHORT_HASH}-${BOARD}
+    image: ghcr.io/pedrom20/mupitech-player-server:${GIT_SHORT_HASH}-${BOARD}
     build:
       context: .
       dockerfile: ./docker/Dockerfile.server
@@ -25,7 +25,7 @@ services:
       io.balena.features.supervisor-api: '1'
 
   anthias-viewer:
-    image: ghcr.io/screenly/anthias-viewer:${GIT_SHORT_HASH}-${BOARD}
+    image: ghcr.io/pedrom20/mupitech-player-viewer:${GIT_SHORT_HASH}-${BOARD}
     build:
       context: .
       dockerfile: ./docker/Dockerfile.viewer
@@ -57,7 +57,7 @@ services:
   anthias-celery:
     # Runs on the same image as anthias-server with a CMD override.
     # See docker-compose.yml.tmpl for context on the merge.
-    image: ghcr.io/screenly/anthias-server:${GIT_SHORT_HASH}-${BOARD}
+    image: ghcr.io/pedrom20/mupitech-player-server:${GIT_SHORT_HASH}-${BOARD}
     command: >
       nice -n 19 ionice -c 3
       celery -A anthias_server.celery_tasks.celery worker -B -n worker@anthias
@@ -78,7 +78,7 @@ services:
       io.balena.features.supervisor-api: '1'
 
   redis:
-    image: ghcr.io/screenly/anthias-redis:${GIT_SHORT_HASH}-${BOARD}
+    image: ghcr.io/pedrom20/mupitech-player-redis:${GIT_SHORT_HASH}-${BOARD}
     build:
       context: .
       dockerfile: ./docker/Dockerfile.redis

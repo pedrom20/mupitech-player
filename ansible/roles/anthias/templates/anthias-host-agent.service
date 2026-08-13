@@ -1,6 +1,6 @@
 [Unit]
 Description=Anthias Host Agent
-Documentation=https://github.com/Screenly/Anthias
+Documentation=https://github.com/pedrom20/mupitech-player
 Requires=docker.service
 After=docker.service
 StartLimitIntervalSec=10

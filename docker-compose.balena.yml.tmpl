@@ -3,7 +3,7 @@
 version: "2"
 services:
   anthias-server:
-    image: ghcr.io/screenly/anthias-server:${GIT_SHORT_HASH}-${BOARD}
+    image: ghcr.io/pedrom20/mupitech-player-server:${GIT_SHORT_HASH}-${BOARD}
     ports:
       - 80:8080
     environment:
@@ -22,7 +22,7 @@ services:
       io.balena.features.supervisor-api: '1'
 
   anthias-viewer:
-    image: ghcr.io/screenly/anthias-viewer:${GIT_SHORT_HASH}-${BOARD}
+    image: ghcr.io/pedrom20/mupitech-player-viewer:${GIT_SHORT_HASH}-${BOARD}
     depends_on:
       - anthias-server
     # Issue #480 — to localise URL-asset rendering, set LANG (and
@@ -55,7 +55,7 @@ services:
   anthias-celery:
     # Runs on the same image as anthias-server with a CMD override.
     # See docker-compose.yml.tmpl for context on the merge.
-    image: ghcr.io/screenly/anthias-server:${GIT_SHORT_HASH}-${BOARD}
+    image: ghcr.io/pedrom20/mupitech-player-server:${GIT_SHORT_HASH}-${BOARD}
     command: >
       nice -n 19 ionice -c 3
       celery -A anthias_server.celery_tasks.celery worker -B -n worker@anthias
@@ -76,7 +76,7 @@ services:
       io.balena.features.supervisor-api: '1'
 
   redis:
-    image: ghcr.io/screenly/anthias-redis:${GIT_SHORT_HASH}-${BOARD}
+    image: ghcr.io/pedrom20/mupitech-player-redis:${GIT_SHORT_HASH}-${BOARD}
     ports:
       - 127.0.0.1:6379:6379
     restart: always
