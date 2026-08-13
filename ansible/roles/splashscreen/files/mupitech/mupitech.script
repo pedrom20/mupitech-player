@@ -1,0 +1,95 @@
+// MupiTech boot splash — animated "breathing glow" logo. Same overall
+// structure as the previous static-image script (scale-to-fit against
+// the real screen size, plus the status-text callback for the rare
+// messages Plymouth itself posts, e.g. during an fsck), but the single
+// static image is replaced with a small looped sequence of frames that
+// only differ in the glow behind the mark, so the panel reads as
+// gently "lighting up" while the device boots.
+
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+num_frames = 16;
+
+// How many refresh callbacks to wait between animation frames. Plymouth
+// calls the refresh function far more often than we want a new frame
+// (commonly tied to the compositor's own refresh rate), so without this
+// throttle the 16-frame loop would cycle multiple times a second instead
+// of reading as a slow, calm pulse. 6 was picked to land close to the
+// ~2s breathing cycle the frames were rendered for; there's no reliable
+// way to query the actual callback rate from script, so this is a
+// reasonable fixed estimate rather than a measured value.
+ticks_per_frame = 6;
+
+frame_image[0] = Image("frame-00.png");
+image_width = frame_image[0].GetWidth();
+image_height = frame_image[0].GetHeight();
+
+scale_x = image_width / screen_width;
+scale_y = image_height / screen_height;
+
+if (scale_x > scale_y)
+{
+	scaled_width = screen_width;
+	scaled_height = image_height / scale_x;
+	image_x = 0;
+	image_y = (screen_height - scaled_height) / 2;
+}
+else
+{
+	scaled_width = image_width / scale_y;
+	scaled_height = screen_height;
+	image_x = (screen_width - scaled_width) / 2;
+	image_y = 0;
+}
+
+frame_image[0] = frame_image[0].Scale(scaled_width, scaled_height);
+
+i = 1;
+while (i < num_frames)
+{
+	if (i < 10)
+		frame_image[i] = Image("frame-0" + i + ".png");
+	else
+		frame_image[i] = Image("frame-" + i + ".png");
+	frame_image[i] = frame_image[i].Scale(scaled_width, scaled_height);
+	i++;
+}
+
+frame_index = 0;
+tick_count = 0;
+
+if (Plymouth.GetMode() != "shutdown")
+{
+	sprite = Sprite(frame_image[0]);
+	sprite.SetPosition(image_x, image_y, -100);
+}
+
+message_sprite = Sprite();
+message_sprite.SetPosition(screen_width * 0.1, screen_height * 0.9, 10000);
+
+fun message_callback(text)
+{
+	my_image = Image.Text(text, 1, 1, 1);
+	message_sprite.SetImage(my_image);
+}
+
+fun refresh_callback()
+{
+	if (Plymouth.GetMode() == "shutdown")
+		return;
+
+	tick_count++;
+	if (tick_count < ticks_per_frame)
+		return;
+	tick_count = 0;
+
+	frame_index++;
+	if (frame_index >= num_frames)
+		frame_index = 0;
+
+	sprite.SetImage(frame_image[frame_index]);
+}
+
+Plymouth.SetUpdateStatusFunction(message_callback);
+Plymouth.SetRefreshFunction(refresh_callback);

@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 r = connect_to_redis()
 
 
-_ANTHIAS_REPO_URL = 'https://github.com/Screenly/Anthias'
+_ANTHIAS_REPO_URL = 'https://github.com/pedrom20/mupitech-player'
 
 # Plain ``.<alnum>`` literal — anything else is rejected by
 # ``assets_upload`` so a hostile ``Content-Disposition: filename=``
@@ -1866,14 +1866,17 @@ def settings_display_power(request: HttpRequest, state: str) -> HttpResponse:
 @require_http_methods(['GET'])
 def system_info(request: HttpRequest) -> HttpResponse:
     context = page_context.system_info()
-    # Master-branch builds get a clickable link to the commit; other
+    # mupitech-custom builds get a clickable link to the commit; other
     # branches stay as plain text (mirrors AnthiasVersionValue in the
-    # old React component, which only built the link when branch==master).
+    # old React component, which only built the link when branch==master
+    # — mupitech-custom is this fork's equivalent release-line branch,
+    # since CI only builds and publishes from it, see
+    # .github/workflows/docker-build.yaml).
     # Read git pieces straight off the env so we don't have to re-parse
     # the version label in lib.diagnostics.get_anthias_version().
     branch = diagnostics.get_git_branch() or ''
     commit = diagnostics.get_git_short_hash() or ''
-    if branch == 'master' and commit:
+    if branch == 'mupitech-custom' and commit:
         context['anthias_version_master_link'] = (
             f'{_ANTHIAS_REPO_URL}/commit/{commit}'
         )

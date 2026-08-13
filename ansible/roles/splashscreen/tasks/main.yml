@@ -25,24 +25,23 @@
       - plymouth-themes
       - plymouth-label
 
-- name: Remove the old Plymouth scripts
+- name: Remove old Plymouth themes (upstream Screenly + our own former Anthias-named theme)
   ansible.builtin.file:
     state: absent
-    path: /usr/share/plymouth/themes/screenly/
-    owner: root
-    group: root
-
-- name: Install plymouth theme files
-  ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: /usr/share/plymouth/themes/anthias/
-    mode: "0644"
+    path: "{{ item }}"
     owner: root
     group: root
   with_items:
-    - anthias.plymouth
-    - anthias.script
-    - splashscreen.png
+    - /usr/share/plymouth/themes/screenly/
+    - /usr/share/plymouth/themes/anthias/
+
+- name: Install plymouth theme files
+  ansible.builtin.copy:
+    src: mupitech/
+    dest: /usr/share/plymouth/themes/mupitech/
+    mode: "0644"
+    owner: root
+    group: root
   notify: Regenerate initramfs
 
 - name: Get current plymouth theme
@@ -55,9 +54,9 @@
 # plymouthd.conf. plymouthd runs from the initramfs and reads its theme
 # and DeviceTimeout from the copy baked in there, so the rebuild has to
 # happen after every file this role installs — see the handler.
-- name: Set Plymouth default theme to Anthias
-  ansible.builtin.command: plymouth-set-default-theme anthias
-  changed_when: splashscreen_plymouth_theme.stdout != "anthias"
+- name: Set Plymouth default theme to MupiTech
+  ansible.builtin.command: plymouth-set-default-theme mupitech
+  changed_when: splashscreen_plymouth_theme.stdout != "mupitech"
   notify: Regenerate initramfs
 
 - name: Install plymouthd defaults

@@ -271,11 +271,11 @@ present in a Raspberry Pi with Anthias installed.
 
 * `sudoers` configuration file that allows pi user to execute certain `sudo` commands without being a superuser (i.e., `root`)
 
-### `/usr/share/plymouth/themes/anthias`
+### `/usr/share/plymouth/themes/mupitech`
 
-* `anthias.plymouth`: Plymouth config file (sets module name, `ImageDir` and `ScriptFile` dir)
-* `anthias.script` &ndash; plymouth script file that loads and scales the splash screen image during the boot process
-* `splashscreen.png`: the splash screen image that is displayed during the boot process
+* `mupitech.plymouth`: Plymouth config file (sets module name, `ImageDir` and `ScriptFile` dir)
+* `mupitech.script` &ndash; plymouth script file that loads, scales and animates the splash screen frames during the boot process
+* `frame-00.png` .. `frame-15.png`: the looped splash screen animation frames displayed during the boot process
 
 ## Debugging the Anthias WebView
 

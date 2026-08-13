@@ -402,10 +402,13 @@ def get_git_hash() -> str | None:
     return os.getenv('GIT_HASH')
 
 
-# Treat both as the project's release line — `master` is upstream's
-# convention; `main` is the GitHub default for forks. Either resolves
-# to "no branch suffix on the version label".
-_RELEASE_BRANCHES = frozenset({'master', 'main'})
+# `mupitech-custom` is this fork's release line — CI only builds and
+# publishes images from it (see .github/workflows/docker-build.yaml),
+# so every real device runs it and doesn't need to be told so on every
+# page load. `master`/`main` are kept too: upstream's own convention
+# and GitHub's default branch name, in case this ever runs from a
+# checkout that hasn't been repointed.
+_RELEASE_BRANCHES = frozenset({'mupitech-custom', 'master', 'main'})
 
 
 def get_anthias_version_head() -> str:

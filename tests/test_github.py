@@ -53,96 +53,42 @@ def _resp(status_code: int = 200, json_data: Any = None) -> MagicMock:
 
 
 # ---------------------------------------------------------------------------
-# _fetch_latest_release_tag
+# _fetch_latest_commit_sha
 # ---------------------------------------------------------------------------
 
 
-def test_fetch_latest_release_tag_cache_hit(
+def test_fetch_latest_commit_sha_cache_hit(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
-    redis_data[github.LATEST_RELEASE_TAG_KEY] = 'v2026.5.0'
+    redis_data[github.LATEST_COMMIT_SHA_KEY] = 'abc1234'
     with mock.patch.object(github, 'requests_get') as mock_get:
-        assert github._fetch_latest_release_tag() == 'v2026.5.0'
+        assert github._fetch_latest_commit_sha() == 'abc1234'
     mock_get.assert_not_called()
 
 
-def test_fetch_latest_release_tag_backoff_skips_fetch(
+def test_fetch_latest_commit_sha_backoff_skips_fetch(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
     redis_data['github-api-error'] = 'something'
     with mock.patch.object(github, 'requests_get') as mock_get:
-        assert github._fetch_latest_release_tag() is None
+        assert github._fetch_latest_commit_sha() is None
     mock_get.assert_not_called()
 
 
-def test_fetch_latest_release_tag_happy_path(
+def test_fetch_latest_commit_sha_happy_path(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
-    resp = _resp(200, json_data=[{'tag_name': 'v2026.6.0', 'name': 'Release'}])
+    resp = _resp(200, json_data={'sha': 'abcdef1234567890'})
     with mock.patch.object(
         github, 'requests_get', return_value=resp
     ) as mock_get:
-        assert github._fetch_latest_release_tag() == 'v2026.6.0'
-    assert redis_data[github.LATEST_RELEASE_TAG_KEY] == 'v2026.6.0'
+        assert github._fetch_latest_commit_sha() == 'abcdef1'
+    assert redis_data[github.LATEST_COMMIT_SHA_KEY] == 'abcdef1'
     url = mock_get.call_args.args[0]
-    assert '/repos/Screenly/Anthias/releases' in url
-    assert '/releases/latest' not in url
+    assert '/repos/pedrom20/mupitech-player/commits/mupitech-custom' in url
 
 
-def test_fetch_latest_release_tag_skips_non_app_releases(
-    github_env: None, redis_data: dict[str, str]
-) -> None:
-    """The ANTHIAS-3P scenario: a non-app release (frozen Qt 5
-    toolchain, tagged ``WebView-v2026.07.1``) is the newest release in
-    the repo. ``/releases/latest`` would return it and break the
-    update check fleet-wide; the list-based fetch must skip it and
-    pick the newest parseable CalVer tag instead."""
-    resp = _resp(
-        200,
-        json_data=[
-            {'tag_name': 'WebView-v2026.07.1', 'name': 'WebView toolchain'},
-            {'tag_name': 'v2026.7.0', 'name': 'Anthias'},
-            {'tag_name': 'v2026.6.3', 'name': 'Anthias'},
-        ],
-    )
-    with mock.patch.object(github, 'requests_get', return_value=resp):
-        assert github._fetch_latest_release_tag() == 'v2026.7.0'
-    assert redis_data[github.LATEST_RELEASE_TAG_KEY] == 'v2026.7.0'
-    assert 'github-api-error' not in redis_data
-
-
-def test_fetch_latest_release_tag_picks_highest_version_not_first(
-    github_env: None, redis_data: dict[str, str]
-) -> None:
-    """The list is ordered by creation date, not by version — a
-    hotfix tagged out of order must not mask the real latest."""
-    resp = _resp(
-        200,
-        json_data=[
-            {'tag_name': 'v2026.5.1', 'name': 'Hotfix, created last'},
-            {'tag_name': 'v2026.6.0', 'name': 'Anthias'},
-        ],
-    )
-    with mock.patch.object(github, 'requests_get', return_value=resp):
-        assert github._fetch_latest_release_tag() == 'v2026.6.0'
-
-
-def test_fetch_latest_release_tag_skips_drafts_and_prereleases(
-    github_env: None, redis_data: dict[str, str]
-) -> None:
-    resp = _resp(
-        200,
-        json_data=[
-            {'tag_name': 'v2026.8.0', 'draft': True},
-            {'tag_name': 'v2026.7.1', 'prerelease': True},
-            {'tag_name': 'v2026.7.0'},
-        ],
-    )
-    with mock.patch.object(github, 'requests_get', return_value=resp):
-        assert github._fetch_latest_release_tag() == 'v2026.7.0'
-
-
-def test_fetch_latest_release_tag_request_exception(
+def test_fetch_latest_commit_sha_request_exception(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
     with mock.patch.object(
@@ -150,86 +96,58 @@ def test_fetch_latest_release_tag_request_exception(
         'requests_get',
         side_effect=requests_exceptions.ConnectionError(),
     ):
-        assert github._fetch_latest_release_tag() is None
+        assert github._fetch_latest_commit_sha() is None
     assert 'github-api-error' in redis_data
 
 
-def test_fetch_latest_release_tag_5xx_triggers_backoff(
+def test_fetch_latest_commit_sha_5xx_triggers_backoff(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
     with mock.patch.object(github, 'requests_get', return_value=_resp(500)):
-        assert github._fetch_latest_release_tag() is None
+        assert github._fetch_latest_commit_sha() is None
     assert 'github-api-error' in redis_data
 
 
-def test_fetch_latest_release_tag_invalid_json(
+def test_fetch_latest_commit_sha_invalid_json(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
     resp = _resp(200)
     resp.json.side_effect = ValueError('bad json')
     with mock.patch.object(github, 'requests_get', return_value=resp):
-        assert github._fetch_latest_release_tag() is None
+        assert github._fetch_latest_commit_sha() is None
     # Malformed bodies arm the same backoff as transport failures so
     # the next page render doesn't re-fetch immediately.
     assert 'github-api-error' in redis_data
-    assert github.LATEST_RELEASE_TAG_KEY not in redis_data
+    assert github.LATEST_COMMIT_SHA_KEY not in redis_data
 
 
 @pytest.mark.parametrize(
     'json_data',
     [
-        [],
-        [{'name': 'Release without tag_name'}],
-        [{'tag_name': 12345}],
-        [{'tag_name': 'nightly'}, {'tag_name': 'WebView-v2026.07.1'}],
-        {'tag_name': 'v2026.6.0'},  # dict (old /latest shape), not a list
+        {},
+        {'sha': 12345},
+        {'sha': ''},
+        [{'sha': 'abcdef1234567890'}],  # list (unexpected shape), not a dict
     ],
     ids=[
-        'empty-list',
-        'missing-tag-name',
-        'non-string-tag-name',
-        'no-parseable-tags',
-        'non-list-payload',
+        'missing-sha',
+        'non-string-sha',
+        'empty-sha',
+        'non-dict-payload',
     ],
 )
-def test_fetch_latest_release_tag_unusable_payload_arms_backoff(
+def test_fetch_latest_commit_sha_unusable_payload_arms_backoff(
     github_env: None, redis_data: dict[str, str], json_data: object
 ) -> None:
-    """A payload with no usable tag must not be cached: with a 24h
+    """A payload with no usable sha must not be cached: with a 24h
     TTL, caching would pin is_up_to_date() to the fallback verdict
-    for a day even after upstream corrects it. Trip the 5-minute
-    backoff instead so the next attempt re-fetches once upstream is
-    fixed."""
+    for a day even after the API response recovers. Trip the
+    5-minute backoff instead so the next attempt re-fetches soon."""
     resp = _resp(200, json_data=json_data)
     with mock.patch.object(github, 'requests_get', return_value=resp):
-        assert github._fetch_latest_release_tag() is None
+        assert github._fetch_latest_commit_sha() is None
     assert 'github-api-error' in redis_data
-    assert github.LATEST_RELEASE_TAG_KEY not in redis_data
-
-
-# ---------------------------------------------------------------------------
-# _parse_version
-# ---------------------------------------------------------------------------
-
-
-def test_parse_version_strips_leading_v() -> None:
-    a = github._parse_version('v2026.5.0')
-    b = github._parse_version('2026.5.0')
-    assert a is not None and b is not None
-    assert a == b
-
-
-def test_parse_version_invalid_returns_none() -> None:
-    assert github._parse_version('') is None
-    assert github._parse_version('not-a-version') is None
-
-
-def test_parse_version_calver_ordering_is_numeric() -> None:
-    """Catches the bug from the issue: string compare would put 10
-    before 5; packaging.version must compare numerically."""
-    assert github._parse_version('2026.10.0') > github._parse_version(  # type: ignore[operator]
-        '2026.5.0'
-    )
+    assert github.LATEST_COMMIT_SHA_KEY not in redis_data
 
 
 # ---------------------------------------------------------------------------
@@ -237,19 +155,19 @@ def test_parse_version_calver_ordering_is_numeric() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_is_up_to_date_matching_versions_returns_true(
+def test_is_up_to_date_matching_hash_returns_true(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
     with (
         mock.patch.object(
-            github, 'get_anthias_release', return_value='2026.5.0'
+            github, 'get_git_short_hash', return_value='abc1234'
         ),
         mock.patch.object(
-            github, '_fetch_latest_release_tag', return_value='v2026.5.0'
+            github, '_fetch_latest_commit_sha', return_value='abc1234'
         ),
     ):
         assert github.is_up_to_date() is True
-    assert redis_data[github._verdict_cache_key('2026.5.0')] == '1'
+    assert redis_data[github._verdict_cache_key('abc1234')] == '1'
 
 
 def test_is_up_to_date_local_behind_returns_false(
@@ -257,102 +175,100 @@ def test_is_up_to_date_local_behind_returns_false(
 ) -> None:
     with (
         mock.patch.object(
-            github, 'get_anthias_release', return_value='2026.5.0'
+            github, 'get_git_short_hash', return_value='abc1234'
         ),
         mock.patch.object(
-            github, '_fetch_latest_release_tag', return_value='v2026.6.0'
+            github, '_fetch_latest_commit_sha', return_value='def5678'
         ),
     ):
         assert github.is_up_to_date() is False
-    assert redis_data[github._verdict_cache_key('2026.5.0')] == '0'
+    assert redis_data[github._verdict_cache_key('abc1234')] == '0'
 
 
-def test_is_up_to_date_local_ahead_returns_true(
+def test_is_up_to_date_no_local_hash_suppresses_indicator(
+    github_env: None,
+) -> None:
+    """A host run with no GIT_SHORT_HASH env var gets no comparison
+    and no pill. The remote fetch isn't even attempted in that case."""
+    with (
+        mock.patch.object(github, 'get_git_short_hash', return_value=None),
+        mock.patch.object(github, '_fetch_latest_commit_sha') as fetch_mock,
+    ):
+        assert github.is_up_to_date() is True
+    fetch_mock.assert_not_called()
+
+
+def test_is_up_to_date_no_local_hash_empty_string_suppresses_indicator(
+    github_env: None,
+) -> None:
+    with (
+        mock.patch.object(github, 'get_git_short_hash', return_value=''),
+        mock.patch.object(github, '_fetch_latest_commit_sha') as fetch_mock,
+    ):
+        assert github.is_up_to_date() is True
+    fetch_mock.assert_not_called()
+
+
+def test_is_up_to_date_local_hash_truncated_to_short_length(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
-    """A local dev bump (e.g. master tip past the last release tag)
-    is still 'up to date' — the indicator is about being behind, not
-    matching exactly."""
+    """A longer local hash (e.g. a full 40-char SHA from a dev
+    checkout) is truncated to SHORT_HASH_LENGTH before comparing,
+    matching how CI stamps GIT_SHORT_HASH onto real images."""
     with (
         mock.patch.object(
-            github, 'get_anthias_release', return_value='2026.10.0'
+            github, 'get_git_short_hash', return_value='abc1234extra'
         ),
         mock.patch.object(
-            github, '_fetch_latest_release_tag', return_value='v2026.5.0'
+            github, '_fetch_latest_commit_sha', return_value='abc1234'
         ),
     ):
         assert github.is_up_to_date() is True
-    assert redis_data[github._verdict_cache_key('2026.10.0')] == '1'
-
-
-def test_is_up_to_date_unparseable_local_suppresses_indicator(
-    github_env: None,
-) -> None:
-    """Dev builds without a parseable CalVer get no comparison and no
-    pill. The remote fetch isn't even attempted in that case."""
-    with (
-        mock.patch.object(github, 'get_anthias_release', return_value=''),
-        mock.patch.object(github, '_fetch_latest_release_tag') as fetch_mock,
-    ):
-        assert github.is_up_to_date() is True
-    fetch_mock.assert_not_called()
-
-
-def test_is_up_to_date_unparseable_local_string_suppresses_indicator(
-    github_env: None,
-) -> None:
-    with (
-        mock.patch.object(
-            github, 'get_anthias_release', return_value='dev-snapshot'
-        ),
-        mock.patch.object(github, '_fetch_latest_release_tag') as fetch_mock,
-    ):
-        assert github.is_up_to_date() is True
-    fetch_mock.assert_not_called()
+    assert redis_data[github._verdict_cache_key('abc1234')] == '1'
 
 
 def test_is_up_to_date_github_error_with_cached_verdict_uses_it(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
-    redis_data[github._verdict_cache_key('2026.5.0')] = '1'
+    redis_data[github._verdict_cache_key('abc1234')] = '1'
     with (
         mock.patch.object(
-            github, 'get_anthias_release', return_value='2026.5.0'
+            github, 'get_git_short_hash', return_value='abc1234'
         ),
         mock.patch.object(
-            github, '_fetch_latest_release_tag', return_value=None
+            github, '_fetch_latest_commit_sha', return_value=None
         ),
     ):
         assert github.is_up_to_date() is True
 
-    redis_data[github._verdict_cache_key('2026.5.0')] = '0'
+    redis_data[github._verdict_cache_key('abc1234')] = '0'
     with (
         mock.patch.object(
-            github, 'get_anthias_release', return_value='2026.5.0'
+            github, 'get_git_short_hash', return_value='abc1234'
         ),
         mock.patch.object(
-            github, '_fetch_latest_release_tag', return_value=None
+            github, '_fetch_latest_commit_sha', return_value=None
         ),
     ):
         assert github.is_up_to_date() is False
 
 
-def test_is_up_to_date_verdict_cache_does_not_leak_across_releases(
+def test_is_up_to_date_verdict_cache_does_not_leak_across_builds(
     github_env: None, redis_data: dict[str, str]
 ) -> None:
     """An upgrade during a GitHub outage must not reuse the previous
-    version's verdict — that verdict was computed against the OLD
-    installed release, so it can be stale either way after an
-    upgrade. Without a cached verdict for the new release, fall back
-    to False so the indicator state catches up to reality on the next
-    successful check."""
-    redis_data[github._verdict_cache_key('2026.5.0')] = '0'
+    build's verdict — that verdict was computed against the OLD
+    running hash, so it can be stale either way after an upgrade.
+    Without a cached verdict for the new hash, fall back to False so
+    the indicator state catches up to reality on the next successful
+    check."""
+    redis_data[github._verdict_cache_key('abc1234')] = '0'
     with (
         mock.patch.object(
-            github, 'get_anthias_release', return_value='2026.6.0'
+            github, 'get_git_short_hash', return_value='def5678'
         ),
         mock.patch.object(
-            github, '_fetch_latest_release_tag', return_value=None
+            github, '_fetch_latest_commit_sha', return_value=None
         ),
     ):
         assert github.is_up_to_date() is False
@@ -365,43 +281,10 @@ def test_is_up_to_date_github_error_no_cache_returns_false(
     have never successfully checked."""
     with (
         mock.patch.object(
-            github, 'get_anthias_release', return_value='2026.5.0'
+            github, 'get_git_short_hash', return_value='abc1234'
         ),
         mock.patch.object(
-            github, '_fetch_latest_release_tag', return_value=None
-        ),
-    ):
-        assert github.is_up_to_date() is False
-
-
-def test_is_up_to_date_malformed_remote_tag_falls_back(
-    github_env: None, redis_data: dict[str, str]
-) -> None:
-    redis_data[github._verdict_cache_key('2026.5.0')] = '1'
-    with (
-        mock.patch.object(
-            github, 'get_anthias_release', return_value='2026.5.0'
-        ),
-        mock.patch.object(
-            github,
-            '_fetch_latest_release_tag',
-            return_value='not-a-version',
-        ),
-    ):
-        assert github.is_up_to_date() is True
-
-
-def test_is_up_to_date_malformed_remote_tag_no_cache_returns_false(
-    github_env: None,
-) -> None:
-    with (
-        mock.patch.object(
-            github, 'get_anthias_release', return_value='2026.5.0'
-        ),
-        mock.patch.object(
-            github,
-            '_fetch_latest_release_tag',
-            return_value='not-a-version',
+            github, '_fetch_latest_commit_sha', return_value=None
         ),
     ):
         assert github.is_up_to_date() is False

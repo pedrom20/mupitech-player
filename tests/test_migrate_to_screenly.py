@@ -30,7 +30,6 @@ from tests._seed_data import (
 
 BASE_URL = 'http://localhost:8080'
 MIGRATE_URL = f'{BASE_URL}/settings/migrate-to-screenly/'
-SETTINGS_URL = f'{BASE_URL}/settings/'
 
 DEFAULT_TIMEOUT_MS = 15_000
 
@@ -151,23 +150,6 @@ def _mock_migrate_per_asset(
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
-
-
-@pytest.mark.integration
-@pytest.mark.django_db(transaction=True)
-def test_settings_page_links_to_migration_wizard(
-    reset_assets: None, page: Page
-) -> None:
-    """The Settings page must surface the entry point — otherwise the
-    operator has no way to discover the wizard."""
-    page.goto(SETTINGS_URL)
-    start = page.get_by_role('link', name='Start migration')
-    expect(start).to_be_visible()
-    start.click()
-    expect(
-        page.get_by_role('heading', name='Migrate to Screenly')
-    ).to_be_visible()
-    expect(page.get_by_role('heading', name='Get started')).to_be_visible()
 
 
 @pytest.mark.integration

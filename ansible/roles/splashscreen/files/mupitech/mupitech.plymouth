@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=MupiTech
+Description=MupiTech Splash Screen
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/mupitech
+ScriptFile=/usr/share/plymouth/themes/mupitech/mupitech.script
