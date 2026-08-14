@@ -1,0 +1,34 @@
+{# vim: ft=htmldjango #}
+{% comment %} MupiTech addition — video standby wrapper, loaded by the
+   viewer via view_webpage() when show_standby() (anthias_viewer/
+   __init__.py) detects a standby.mp4/standby.webm on this device.
+   Self-contained (no shared CSS bundle) since it's just a full-bleed
+   looping video. {% endcomment %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Standby</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+    video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+{% if video_url %}
+<video src="{{ video_url }}" autoplay muted loop playsinline></video>
+{% endif %}
+</body>
+</html>

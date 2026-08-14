@@ -29,6 +29,9 @@ from anthias_viewer.constants import SERVER_WAIT_TIMEOUT as SERVER_WAIT_TIMEOUT
 from anthias_viewer.constants import SPLASH_DELAY as SPLASH_DELAY
 from anthias_viewer.constants import SPLASH_PAGE_URL as SPLASH_PAGE_URL
 from anthias_viewer.constants import STANDBY_SCREEN as STANDBY_SCREEN
+from anthias_viewer.constants import STANDBY_VIDEO_MP4_URL as STANDBY_VIDEO_MP4_URL
+from anthias_viewer.constants import STANDBY_VIDEO_PAGE_URL as STANDBY_VIDEO_PAGE_URL
+from anthias_viewer.constants import STANDBY_VIDEO_WEBM_URL as STANDBY_VIDEO_WEBM_URL
 from anthias_viewer.media_player import MediaPlayerProxy
 from anthias_viewer.playback import (
     navigate_to_asset,
@@ -1599,6 +1602,50 @@ def view_webpage(
     logger.debug(f'Current url is {current_browser_url}')
 
 
+_standby_target: tuple[str, bool] | None = None
+
+
+def _resolve_standby_target() -> tuple[str, bool]:
+    """(url, is_video) for whichever standby override is on this
+    device: a video (checked via a cheap HEAD — WhiteNoise 404s a
+    missing static file) takes priority over the image path, which
+    always exists (baked-in default or a custom override)."""
+    for video_url in (STANDBY_VIDEO_MP4_URL, STANDBY_VIDEO_WEBM_URL):
+        try:
+            response = requests.head(video_url, timeout=2)
+            if response.status_code == 200:
+                return (STANDBY_VIDEO_PAGE_URL, True)
+        except requests.RequestException:
+            pass
+    return (STANDBY_SCREEN, False)
+
+
+def show_standby() -> None:
+    """Display the standby screen: the baked-in/custom image (the
+    common case, via view_image — unchanged from before this existed),
+    or, if a custom standby video override exists, a looping webpage
+    wrapping it (view_webpage) — see mupitech_standby_views.py on the
+    server side.
+
+    The image-vs-video decision is resolved once via a cheap HEAD
+    request and cached for the life of this process rather than
+    re-checked on every call (this is called every EMPTY_PL_DELAY
+    while the playlist is idle). A branding push that changes the
+    standby slot always restarts the anthias-server container (see
+    mupiteck's push_standby_image_to_player), which naturally
+    invalidates this cache by way of a fresh process — no explicit
+    invalidation needed.
+    """
+    global _standby_target
+    if _standby_target is None:
+        _standby_target = _resolve_standby_target()
+    url, is_video = _standby_target
+    if is_video:
+        view_webpage(url)
+    else:
+        view_image(url)
+
+
 def view_image(uri: str, skip_ssl_verify: bool = False) -> None:
     global current_browser_url, current_browser_skip_ssl
 
@@ -2346,7 +2393,7 @@ def asset_loop(scheduler: Any) -> None:
                 EMPTY_PL_DELAY,
             )
             _empty_playlist_logged = True
-        view_image(STANDBY_SCREEN)
+        show_standby()
         skip_event = get_skip_event()
         skip_event.clear()
         if skip_event.wait(timeout=EMPTY_PL_DELAY):
@@ -2610,7 +2657,7 @@ def main() -> None:
 
     # This will prevent white screen from happening before showing the
     # splash screen with IP addresses.
-    view_image(STANDBY_SCREEN)
+    show_standby()
 
     wait_for_server(SERVER_WAIT_TIMEOUT)
 
@@ -2622,7 +2669,7 @@ def main() -> None:
 
     # We don't want to show splash page if there are active assets but all of
     # them are not available.
-    view_image(STANDBY_SCREEN)
+    show_standby()
 
     sleep(0.5)
 

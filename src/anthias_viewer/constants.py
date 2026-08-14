@@ -4,6 +4,11 @@ SPLASH_DELAY = 60  # secs
 EMPTY_PL_DELAY = 5  # secs
 
 STANDBY_SCREEN = f'http://{LISTEN}:{PORT}/static/img/standby.png'
+# Checked for existence (via a cheap HEAD) before falling back to
+# STANDBY_SCREEN above — see show_standby() in anthias_viewer/__init__.py.
+STANDBY_VIDEO_MP4_URL = f'http://{LISTEN}:{PORT}/static/img/standby.mp4'
+STANDBY_VIDEO_WEBM_URL = f'http://{LISTEN}:{PORT}/static/img/standby.webm'
+STANDBY_VIDEO_PAGE_URL = f'http://{LISTEN}:{PORT}/standby-video'
 # Solid-black image shown by the ``blank`` command. On eglfs/linuxfb
 # boards the Qt app owns the DRM master and can't be powered off
 # externally, so painting black is how those screens "blank"; Wayland

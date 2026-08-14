@@ -22,6 +22,7 @@ from django.urls import include, path, re_path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
 
 from anthias_server.app import views_files
+from anthias_server.app.mupitech_standby_views import standby_video
 from anthias_server.lib.auth import authorized
 
 
@@ -43,6 +44,10 @@ urlpatterns = [
     # into the session/cookie that LocaleMiddleware reads on every
     # subsequent request.
     path('i18n/', include('django.conf.urls.i18n')),
+    # MupiTech addition — see mupitech_standby_views.py's module
+    # docstring. Loaded by the viewer's show_standby() when a custom
+    # standby video override exists on this device.
+    path('standby-video/', standby_video, name='mupitech_standby_video'),
     path('api/', include('anthias_server.api.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', APIDocView.as_view(url_name='schema'), name='redoc'),
