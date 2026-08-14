@@ -14,6 +14,7 @@
 // images are referenced and their absence is harmless.
 
 import L from 'leaflet'
+import { t } from '../i18n'
 
 const DEFAULT_CENTER: L.LatLngTuple = [51.5287718, -0.2417001]
 const DEFAULT_ZOOM = 11
@@ -72,7 +73,7 @@ export function initLocationMap(
     // centre's numbers would read as "a location is set" when it isn't.
     const hint = document.createElement('div')
     hint.className = 'app-cfg-map__hint'
-    hint.textContent = 'Drag to set location'
+    hint.textContent = t('map.dragToSetLocation', 'Drag to set location')
     mount.append(canvas, pin, readout, hint)
 
     const map = L.map(canvas, {

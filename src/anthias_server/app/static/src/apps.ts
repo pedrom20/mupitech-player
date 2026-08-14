@@ -13,6 +13,7 @@ import { fetchManifest, loadCatalog } from './apps/catalog'
 import { buildLaunchUrl } from './apps/launch-url'
 import { renderManifestForm, teardownHost } from './apps/manifest-form'
 import { suggestedName } from './apps/suggested-name'
+import { t } from './i18n'
 import type { CatalogApp, SettingValue } from './apps/types'
 
 type Phase = 'loading' | 'ready' | 'error' | 'config'
@@ -82,7 +83,7 @@ export function appsTab(): AppsTabData {
       const url = indexUrl()
       if (!url) {
         this.phase = 'error'
-        this.error = 'No app store configured.'
+        this.error = t('apps.noStoreConfigured', 'No app store configured.')
         return
       }
       this.phase = 'loading'
@@ -94,16 +95,17 @@ export function appsTab(): AppsTabData {
         this.loaded = true
         if (!this.apps.length) {
           this.phase = 'error'
-          this.error = 'No apps are available right now.'
+          this.error = t('apps.noAppsAvailable', 'No apps are available right now.')
           return
         }
         this.phase = 'ready'
       } catch (e) {
         if (e instanceof DOMException && e.name === 'AbortError') return
         this.phase = 'error'
-        this.error =
-          "Couldn't reach the app store. Check your network connection " +
-          'and try again.'
+        this.error = t(
+          'apps.storeUnreachable',
+          "Couldn't reach the app store. Check your network connection and try again.",
+        )
       }
     },
 
@@ -221,7 +223,7 @@ export function appEdit(asset: EditAsset): AppEditData {
       const manifestUrl = app?.manifest_url
       if (!manifestUrl) {
         this.phase = 'error'
-        this.error = 'This app has no manifest reference.'
+        this.error = t('apps.noManifestReference', 'This app has no manifest reference.')
         return
       }
       abort = new AbortController()
@@ -261,9 +263,10 @@ export function appEdit(asset: EditAsset): AppEditData {
         .catch((e) => {
           if (e instanceof DOMException && e.name === 'AbortError') return
           this.phase = 'error'
-          this.error =
-            "Couldn't load this app's settings. Check your network " +
-            'connection and reopen.'
+          this.error = t(
+            'apps.settingsUnreachable',
+            "Couldn't load this app's settings. Check your network connection and reopen.",
+          )
         })
     },
   }

@@ -5,6 +5,31 @@
 {% block title %}{% if player_name %}{{ player_name }} · {% endif %}{% translate "Schedule Overview" %}{% endblock %}
 
 {% block extra_head %}
+{% comment %} home.js is a static bundle built once at image-build time
+   (bun), so it can't run {% translate %} itself — the handful of
+   strings it needs to show (app-store errors, map hint, "Default"
+   option label) are injected here as a plain dict and read via
+   static/src/i18n.ts::t(key, fallback) at runtime. Keep this list in
+   sync with the t() calls in home.ts's dependency tree — a missing
+   key just falls back to the English default, it doesn't break. {% endcomment %}
+{% translate "No app store configured." as i18n_no_store_configured %}
+{% translate "No apps are available right now." as i18n_no_apps_available %}
+{% translate "Couldn't reach the app store. Check your network connection and try again." as i18n_store_unreachable %}
+{% translate "This app has no manifest reference." as i18n_no_manifest_reference %}
+{% translate "Couldn't load this app's settings. Check your network connection and reopen." as i18n_settings_unreachable %}
+{% translate "Default" as i18n_select_default %}
+{% translate "Drag to set location" as i18n_drag_to_set_location %}
+<script>
+  window.__i18n = {
+    'apps.noStoreConfigured': '{{ i18n_no_store_configured|escapejs }}',
+    'apps.noAppsAvailable': '{{ i18n_no_apps_available|escapejs }}',
+    'apps.storeUnreachable': '{{ i18n_store_unreachable|escapejs }}',
+    'apps.noManifestReference': '{{ i18n_no_manifest_reference|escapejs }}',
+    'apps.settingsUnreachable': '{{ i18n_settings_unreachable|escapejs }}',
+    'apps.selectDefault': '{{ i18n_select_default|escapejs }}',
+    'map.dragToSetLocation': '{{ i18n_drag_to_set_location|escapejs }}',
+  }
+</script>
 <script src="{% static 'dist/js/home.js' %}" defer></script>
 {% endblock %}
 

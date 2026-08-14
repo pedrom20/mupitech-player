@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import type { SettingSchema, SettingValue } from './types'
 
 // The visible text a <select> shows for one option value: an explicit
@@ -14,5 +15,5 @@ export function selectOptionLabel(
   const options = schema.enum ?? []
   const i = options.findIndex((v) => v === value)
   if (i >= 0 && labels[i] !== undefined) return labels[i]
-  return value === '' ? 'Default' : String(value)
+  return value === '' ? t('apps.selectDefault', 'Default') : String(value)
 }

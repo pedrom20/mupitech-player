@@ -830,3 +830,25 @@ msgstr "Ligar ecrã"
 
 msgid "Turn display off"
 msgstr "Desligar ecrã"
+
+# --- home.html: window.__i18n bridge for home.js (static bundle, no server-side translate) ---
+msgid "No app store configured."
+msgstr "Nenhuma loja de apps configurada."
+
+msgid "No apps are available right now."
+msgstr "Não há apps disponíveis neste momento."
+
+msgid "Couldn't reach the app store. Check your network connection and try again."
+msgstr "Não foi possível contactar a loja de apps. Verifique a sua ligação de rede e tente novamente."
+
+msgid "This app has no manifest reference."
+msgstr "Esta app não tem referência de manifesto."
+
+msgid "Couldn't load this app's settings. Check your network connection and reopen."
+msgstr "Não foi possível carregar as definições desta app. Verifique a sua ligação de rede e reabra."
+
+msgid "Default"
+msgstr "Predefinição"
+
+msgid "Drag to set location"
+msgstr "Arraste para definir a localização"
