@@ -56,8 +56,15 @@ def sso_callback(request: HttpRequest) -> HttpResponse:
         return HttpResponseRedirect('/')
 
     django_login(request, operator)
+    # Session-only (not a device-side User field — there's only the one
+    # shared operator account, see module docstring) marker of the FM
+    # role that established this session. Used to gate admin-only detail
+    # (e.g. the full build version in system_info) behind "this visitor
+    # authenticated via FM SSO as an admin/superadmin", the only role
+    # signal this device has any way to observe.
+    request.session['fm_sso_role'] = payload.get('role', '')
     logger.info(
-        'SSO login accepted (requested by Fleet Manager user %r)',
-        payload.get('requested_by', '?'),
+        'SSO login accepted (requested by Fleet Manager user %r, role %r)',
+        payload.get('requested_by', '?'), payload.get('role', '?'),
     )
     return HttpResponseRedirect('/')

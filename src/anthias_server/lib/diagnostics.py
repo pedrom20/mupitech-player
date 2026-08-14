@@ -410,6 +410,17 @@ def get_git_hash() -> str | None:
 # checkout that hasn't been repointed.
 _RELEASE_BRANCHES = frozenset({'mupitech-custom', 'master', 'main'})
 
+# A friendly product-facing version, independent of the internal calver
+# release/git metadata below — shown to non-admin visitors instead of
+# the technical version line (see views.py::system_info), which exposes
+# a commit hash and branch name that mean nothing to a regular device
+# user. Bumped by hand; no changelog UI for the player yet.
+PLAYER_VERSION = '1.0.0'
+
+
+def get_player_simple_version() -> str:
+    return f'v{PLAYER_VERSION}'
+
 
 def get_anthias_version_head() -> str:
     """The primary version line — ``v{calver}``. Returns ``''`` only

@@ -1866,20 +1866,34 @@ def settings_display_power(request: HttpRequest, state: str) -> HttpResponse:
 @require_http_methods(['GET'])
 def system_info(request: HttpRequest) -> HttpResponse:
     context = page_context.system_info()
-    # mupitech-custom builds get a clickable link to the commit; other
-    # branches stay as plain text (mirrors AnthiasVersionValue in the
-    # old React component, which only built the link when branch==master
-    # — mupitech-custom is this fork's equivalent release-line branch,
-    # since CI only builds and publishes from it, see
-    # .github/workflows/docker-build.yaml).
-    # Read git pieces straight off the env so we don't have to re-parse
-    # the version label in lib.diagnostics.get_anthias_version().
-    branch = diagnostics.get_git_branch() or ''
-    commit = diagnostics.get_git_short_hash() or ''
-    if branch == 'mupitech-custom' and commit:
-        context['anthias_version_master_link'] = (
-            f'{_ANTHIAS_REPO_URL}/commit/{commit}'
-        )
+    # The full calver + git hash + branch line means nothing to a
+    # regular on-site user and leaks internal build detail — only show
+    # it to a visitor whose session was established via Fleet Manager
+    # SSO as an admin/superadmin (the only role signal this device can
+    # observe at all, see mupitech_sso_views.py). Everyone else (the
+    # shared device credential, or no FM role info) gets the plain
+    # product version instead.
+    is_fm_admin = request.session.get('fm_sso_role') in ('admin', 'superadmin')
+    context['is_fm_admin'] = is_fm_admin
+    context['player_version_simple'] = diagnostics.get_player_simple_version()
+    if is_fm_admin:
+        # mupitech-custom builds get a clickable link to the commit; other
+        # branches stay as plain text (mirrors AnthiasVersionValue in the
+        # old React component, which only built the link when branch==master
+        # — mupitech-custom is this fork's equivalent release-line branch,
+        # since CI only builds and publishes from it, see
+        # .github/workflows/docker-build.yaml).
+        # Read git pieces straight off the env so we don't have to re-parse
+        # the version label in lib.diagnostics.get_anthias_version().
+        branch = diagnostics.get_git_branch() or ''
+        commit = diagnostics.get_git_short_hash() or ''
+        if branch == 'mupitech-custom' and commit:
+            context['anthias_version_master_link'] = (
+                f'{_ANTHIAS_REPO_URL}/commit/{commit}'
+            )
+    else:
+        context['anthias_version_head'] = ''
+        context['anthias_version_meta'] = ''
     context['active_nav'] = 'system-info'
     return template(request, 'system_info.html', context)
 
