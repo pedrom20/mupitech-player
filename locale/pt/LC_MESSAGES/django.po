@@ -238,3 +238,230 @@ msgstr "A sua sessão expirou"
 
 msgid "The form's security token didn't match. Reload the page and try again."
 msgstr "O token de segurança do formulário não corresponde. Recarregue a página e tente novamente."
+
+# --- _asset_modal.html ---
+msgid "Edit asset"
+msgstr "Editar conteúdo"
+
+msgid "Uploading…"
+msgstr "A enviar…"
+
+msgid "File {idx} of {total} · "
+msgstr "Ficheiro {idx} de {total} · "
+
+msgid "Uploading… {pct}%"
+msgstr "A enviar… {pct}%"
+
+msgid "Processing on server…"
+msgstr "A processar no servidor…"
+
+msgid "Hide"
+msgstr "Ocultar"
+
+msgid "Copied"
+msgstr "Copiado"
+
+msgid "Copy ffmpeg command"
+msgstr "Copiar comando ffmpeg"
+
+msgid "Copy command"
+msgstr "Copiar comando"
+
+msgctxt "asset type shown as a chip"
+msgid "App"
+msgstr "App"
+
+msgid "Mon"
+msgstr "Seg"
+
+msgid "Tue"
+msgstr "Ter"
+
+msgid "Wed"
+msgstr "Qua"
+
+msgid "Thu"
+msgstr "Qui"
+
+msgid "Fri"
+msgstr "Sex"
+
+msgid "Sat"
+msgstr "Sáb"
+
+msgid "Sun"
+msgstr "Dom"
+
+msgid "From URL"
+msgstr "A partir de URL"
+
+msgid "Upload file"
+msgstr "Enviar ficheiro"
+
+msgid "Apps"
+msgstr "Apps"
+
+msgid "Asset URL"
+msgstr "URL do conteúdo"
+
+msgid "Web pages, hosted images, hosted videos, and streaming URLs are all supported."
+msgstr "São suportadas páginas web, imagens alojadas, vídeos alojados e URLs de streaming."
+
+msgid "Click to choose files"
+msgstr "Clique para escolher ficheiros"
+
+msgid "Images or videos. Select one or many — upload starts immediately."
+msgstr "Imagens ou vídeos. Selecione um ou vários — o envio começa de imediato."
+
+msgid "Loading apps…"
+msgstr "A carregar apps…"
+
+msgid "Try again"
+msgstr "Tentar novamente"
+
+msgid "All apps"
+msgstr "Todas as apps"
+
+msgid "This app has no settings — it's ready to add."
+msgstr "Esta app não tem definições — está pronta a adicionar."
+
+msgid "Back"
+msgstr "Voltar"
+
+msgid "Add app"
+msgstr "Adicionar app"
+
+msgid "Processing failed"
+msgstr "Falha no processamento"
+
+msgid "Prefer a graphical app? Convert it with <a href=\"https://handbrake.fr/\" target=\"_blank\" rel=\"noopener noreferrer\">HandBrake</a>:"
+msgstr "Prefere uma app gráfica? Converta com <a href=\"https://handbrake.fr/\" target=\"_blank\" rel=\"noopener noreferrer\">HandBrake</a>:"
+
+msgid "Asset location"
+msgstr "Localização do conteúdo"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "App settings"
+msgstr "Definições da app"
+
+msgid "Loading settings…"
+msgstr "A carregar definições…"
+
+msgid "Availability"
+msgstr "Disponibilidade"
+
+msgid "The asset is only shown between these dates and times."
+msgstr "O conteúdo só é mostrado entre estas datas e horas."
+
+msgid "Start"
+msgstr "Início"
+
+msgid "End"
+msgstr "Fim"
+
+msgid "Duration (seconds)"
+msgstr "Duração (segundos)"
+
+msgid "Advanced"
+msgstr "Avançado"
+
+msgid "Restrict playback to specific weekdays and hours within the availability window. Leave times empty to play all day."
+msgstr "Restrinja a reprodução a dias da semana e horas específicas dentro da janela de disponibilidade. Deixe as horas vazias para reproduzir o dia todo."
+
+msgid "Play from"
+msgstr "Reproduzir a partir de"
+
+msgid "Play until"
+msgstr "Reproduzir até"
+
+msgid "No cache"
+msgstr "Sem cache"
+
+msgid "Skip asset check"
+msgstr "Ignorar verificação do conteúdo"
+
+msgid "Skip SSL verification"
+msgstr "Ignorar verificação SSL"
+
+msgid "Auto-refresh interval (seconds)"
+msgstr "Intervalo de atualização automática (segundos)"
+
+msgid "Reload the page on this cadence so dashboards stay current. Empty or 0 disables."
+msgstr "Recarrega a página a este ritmo para manter os painéis atualizados. Vazio ou 0 desativa."
+
+msgid "Custom HTTP headers"
+msgstr "Cabeçalhos HTTP personalizados"
+
+msgid "One <code>Name: Value</code> per line, sent only with requests to the asset's own origin (same scheme, host, and port). Leave empty for none."
+msgstr "Um <code>Nome: Valor</code> por linha, enviado apenas em pedidos para a origem do próprio conteúdo (mesmo esquema, anfitrião e porta). Deixe vazio para nenhum."
+
+msgid "Save changes"
+msgstr "Guardar alterações"
+
+# --- _bulk_action_bar.html ---
+msgid "asset selected"
+msgstr "conteúdo selecionado"
+
+msgid "assets selected"
+msgstr "conteúdos selecionados"
+
+msgid "assets"
+msgstr "conteúdos"
+
+msgid "Bulk actions"
+msgstr "Ações em lote"
+
+msgid "Clear selection"
+msgstr "Limpar seleção"
+
+msgid "Delete selected assets?"
+msgstr "Eliminar os conteúdos selecionados?"
+
+# --- _bulk_edit_modal.html ---
+msgid "Tick a field to change it on every selected asset. Unticked fields are left as they are."
+msgstr "Assinale um campo para o alterar em todos os conteúdos selecionados. Os campos não assinalados mantêm o valor atual."
+
+msgid "Start &amp; end dates"
+msgstr "Datas de início e fim"
+
+msgid "Video assets keep their measured length — duration only applies to images and web pages."
+msgstr "Os conteúdos de vídeo mantêm a duração medida — a duração só se aplica a imagens e páginas web."
+
+msgid "Play from / until times"
+msgstr "Horas de reprodução (de / até)"
+
+msgid "Leave both empty to clear the time window (play all day)."
+msgstr "Deixe ambos vazios para limpar a janela horária (reproduzir o dia todo)."
+
+msgid "Days of week"
+msgstr "Dias da semana"
+
+msgid "No cache value"
+msgstr "Valor de sem cache"
+
+msgid "On"
+msgstr "Ligado"
+
+msgid "Off"
+msgstr "Desligado"
+
+msgid "Skip asset check value"
+msgstr "Valor de ignorar verificação"
+
+msgid "Apply to selected"
+msgstr "Aplicar aos selecionados"
+
+# --- _preview_modal.html ---
+msgid "Preview of {name}"
+msgstr "Pré-visualização de {name}"
+
+msgid "Some sites refuse to load inside an iframe. Use Open in new tab if the preview is blank."
+msgstr "Alguns sites recusam carregar dentro de um iframe. Use Abrir em novo separador se a pré-visualização estiver em branco."
+
+msgid "Open in new tab"
+msgstr "Abrir em novo separador"
+
+msgid "Done"
+msgstr "Concluído"

@@ -1,4 +1,7 @@
+{% load i18n %}
 {% comment %}Asset preview modal. Driven by the parent homeApp() Alpine state — previewAsset carries the JSON blob from to_json. Image/video render inline via /assets/<id>/preview; webpage/streaming load the source URI in a sandboxed iframe.{% endcomment %}
+{% translate "Preview" as label_preview %}
+{% translate "Preview of {name}" as tmpl_preview_of %}
 <div
   x-show="previewAsset"
   x-cloak
@@ -9,8 +12,8 @@
 >
   <div class="modal-card modal-card--preview">
     <div class="modal-card__header">
-      <h2 x-text="previewAsset && previewAsset.name ? previewAsset.name : 'Preview'"></h2>
-      <button type="button" class="modal-card__close" @click="closePreview()" aria-label="Close">
+      <h2 x-text="previewAsset && previewAsset.name ? previewAsset.name : '{{ label_preview|escapejs }}'"></h2>
+      <button type="button" class="modal-card__close" @click="closePreview()" aria-label="{% translate 'Close' %}">
         <i class="ti ti-x"></i>
       </button>
     </div>
@@ -36,7 +39,7 @@
         <iframe
           class="preview-media preview-media--frame"
           :src="previewAsset.uri"
-          :title="`Preview of ${previewAsset.name || previewAsset.uri}`"
+          :title="'{{ tmpl_preview_of|escapejs }}'.replace('{name}', previewAsset.name || previewAsset.uri)"
           referrerpolicy="no-referrer"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           allow="autoplay; fullscreen"
@@ -45,7 +48,7 @@
     </div>
     <div class="modal-card__footer">
       <p class="muted-label m-0 mr-auto" x-show="previewAsset && (previewAsset.mimetype === 'webpage' || previewAsset.mimetype === 'streaming')">
-        Some sites refuse to load inside an iframe. Use Open in new tab if the preview is blank.
+        {% translate "Some sites refuse to load inside an iframe. Use Open in new tab if the preview is blank." %}
       </p>
       <a
         x-show="previewAsset"
@@ -54,10 +57,10 @@
         rel="noopener noreferrer"
         class="app-btn app-btn-link"
       >
-        <i class="ti ti-external-link"></i><span>Open in new tab</span>
+        <i class="ti ti-external-link"></i><span>{% translate "Open in new tab" %}</span>
       </a>
       <button type="button" class="app-btn app-btn-primary" @click="closePreview()">
-        <i class="ti ti-check"></i><span>Done</span>
+        <i class="ti ti-check"></i><span>{% translate "Done" %}</span>
       </button>
     </div>
   </div>

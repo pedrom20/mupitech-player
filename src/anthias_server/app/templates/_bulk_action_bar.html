@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %} Floating bulk-action bar (#3046). Shown whenever one or
    more rows are selected (selectedIds is the homeApp Alpine state).
    Enable / Disable / Delete each POST the comma-joined selection to
@@ -6,20 +7,23 @@
    ``ids`` input's :value binding, so it always reflects the live
    selection. On a successful action the selection is cleared.
 {% endcomment %}
+{% translate "asset selected" as label_one_selected %}
+{% translate "assets selected" as label_many_selected %}
+{% translate "asset" as label_asset %}
+{% translate "assets" as label_assets %}
 <div
   class="bulk-bar"
   x-show="selectedIds.length"
   x-cloak
   x-transition.opacity
   role="region"
-  aria-label="Bulk actions"
+  aria-label="{% translate 'Bulk actions' %}"
 >
   <div class="bulk-bar__inner">
     <div class="bulk-bar__count">
       <i class="ti ti-checkbox"></i>
       <span><strong x-text="selectedIds.length"></strong>
-        <span x-text="selectedIds.length === 1 ? 'asset' : 'assets'"></span>
-        selected</span>
+        <span x-text="selectedIds.length === 1 ? '{{ label_one_selected|escapejs }}' : '{{ label_many_selected|escapejs }}'"></span></span>
     </div>
 
     <div class="bulk-bar__actions">
@@ -36,7 +40,7 @@
         <input type="hidden" name="action" value="enable">
         <input type="hidden" name="ids" :value="selectedIds.join(',')">
         <button type="submit" class="app-btn app-btn-light app-btn-pill">
-          <i class="ti ti-toggle-right"></i><span>Enable</span>
+          <i class="ti ti-toggle-right"></i><span>{% translate "Enable" %}</span>
         </button>
       </form>
 
@@ -53,19 +57,19 @@
         <input type="hidden" name="action" value="disable">
         <input type="hidden" name="ids" :value="selectedIds.join(',')">
         <button type="submit" class="app-btn app-btn-light app-btn-pill">
-          <i class="ti ti-player-pause"></i><span>Disable</span>
+          <i class="ti ti-player-pause"></i><span>{% translate "Disable" %}</span>
         </button>
       </form>
 
       <button type="button" class="app-btn app-btn-light app-btn-pill" @click="openBulkEdit()">
-        <i class="ti ti-pencil"></i><span>Edit</span>
+        <i class="ti ti-pencil"></i><span>{% translate "Edit" %}</span>
       </button>
 
       <button type="button" class="app-btn app-btn-danger app-btn-pill" @click="bulkDeleteOpen = true">
-        <i class="ti ti-trash"></i><span>Delete</span>
+        <i class="ti ti-trash"></i><span>{% translate "Delete" %}</span>
       </button>
 
-      <button type="button" class="app-btn app-btn-icon bulk-bar__clear" @click="clearSelection()" title="Clear selection" aria-label="Clear selection">
+      <button type="button" class="app-btn app-btn-icon bulk-bar__clear" @click="clearSelection()" title="{% translate 'Clear selection' %}" aria-label="{% translate 'Clear selection' %}">
         <i class="ti ti-x"></i>
       </button>
     </div>
@@ -84,21 +88,21 @@
 >
   <div class="modal-card modal-card--sm">
     <div class="modal-card__header">
-      <h2>Delete selected assets?</h2>
-      <button type="button" class="modal-card__close" @click="bulkDeleteOpen = false" aria-label="Close">
+      <h2>{% translate "Delete selected assets?" %}</h2>
+      <button type="button" class="modal-card__close" @click="bulkDeleteOpen = false" aria-label="{% translate 'Close' %}">
         <i class="ti ti-x"></i>
       </button>
     </div>
     <div class="modal-card__body">
       <p class="m-0">
-        You're about to delete
+        {% translate "You're about to delete" %}
         <strong><span x-text="selectedIds.length"></span>
-          <span x-text="selectedIds.length === 1 ? 'asset' : 'assets'"></span></strong>.
-        This action cannot be undone.
+          <span x-text="selectedIds.length === 1 ? '{{ label_asset|escapejs }}' : '{{ label_assets|escapejs }}'"></span></strong>.
+        {% translate "This action cannot be undone." %}
       </p>
     </div>
     <div class="modal-card__footer">
-      <button type="button" class="app-btn app-btn-link" @click="bulkDeleteOpen = false">Cancel</button>
+      <button type="button" class="app-btn app-btn-link" @click="bulkDeleteOpen = false">{% translate "Cancel" %}</button>
       <form
         method="post"
         action="{% url 'anthias_app:assets_bulk_action' %}"
@@ -112,7 +116,7 @@
         <input type="hidden" name="action" value="delete">
         <input type="hidden" name="ids" :value="selectedIds.join(',')">
         <button type="submit" class="app-btn app-btn-danger confirm-bulk-delete">
-          <i class="ti ti-trash"></i><span>Delete</span>
+          <i class="ti ti-trash"></i><span>{% translate "Delete" %}</span>
         </button>
       </form>
     </div>
