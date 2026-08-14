@@ -35,6 +35,13 @@ DEFAULTS = {
         'use_ssl': False,
         'auth_backend': '',
         'django_secret_key': '',
+        # Shared secret for verifying Fleet Manager SSO login tokens —
+        # provisioned remotely over SSH (mupiteck's players/sso.py),
+        # deliberately separate from django_secret_key above so a
+        # SECRET_KEY rotation can't also silently break SSO. Empty
+        # means this device hasn't been provisioned for SSO yet, in
+        # which case the callback view rejects every token outright.
+        'sso_secret': '',
         # State for the "Star on GitHub / Review on G2" nudge (server-
         # side so it survives a browser/cache clear and stays consistent
         # across every device the operator opens the UI from).

@@ -22,6 +22,7 @@ from django.urls import include, path, re_path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
 
 from anthias_server.app import views_files
+from anthias_server.app.mupitech_sso_views import sso_callback
 from anthias_server.app.mupitech_standby_views import standby_video
 from anthias_server.lib.auth import authorized
 
@@ -48,6 +49,8 @@ urlpatterns = [
     # docstring. Loaded by the viewer's show_standby() when a custom
     # standby video override exists on this device.
     path('standby-video/', standby_video, name='mupitech_standby_video'),
+    # MupiTech addition — see mupitech_sso_views.py's module docstring.
+    path('sso/callback/', sso_callback, name='mupitech_sso_callback'),
     path('api/', include('anthias_server.api.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', APIDocView.as_view(url_name='schema'), name='redoc'),

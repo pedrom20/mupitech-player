@@ -1,0 +1,16 @@
+{% extends "_error.html" %}
+{% load i18n %}
+{# MupiTech addition — shown by mupitech_sso_views.py when a Fleet
+   Manager SSO login link is invalid, expired, or this device hasn't
+   been provisioned for SSO yet. #}
+
+{% block title %}{% translate "SSO login failed — MupiTech" %}{% endblock %}
+{% block error_icon %}ti-shield-x{% endblock %}
+{% block error_code %}SSO{% endblock %}
+{% block error_headline %}{% translate "This login link didn't work" %}{% endblock %}
+{% block error_subhead %}{% translate "It may have expired, already been used, or this device isn't set up for Fleet Manager login yet. Try opening it again from the Fleet Manager, or log in here directly." %}{% endblock %}
+{% block error_cta %}
+<a href="{% url 'anthias_app:login' %}" class="app-btn app-btn-primary auth-submit">
+  <i class="ti ti-login"></i><span>{% translate "Go to login" %}</span>
+</a>
+{% endblock %}
