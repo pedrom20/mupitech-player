@@ -434,6 +434,14 @@ MIDDLEWARE = [
     # — Sentry ANTHIAS-Y). See anthias_server/lib/whitenoise.py.
     'anthias_server.lib.whitenoise.ResilientWhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    # Resolves the active UI language (en/pt) from, in order: the
+    # `django_language` session key (set by the navbar's language
+    # switcher via django.views.i18n.set_language), the `django_language`
+    # cookie, then the browser's Accept-Language header, falling back to
+    # LANGUAGE_CODE. Must sit after SessionMiddleware (needs the session)
+    # and before CommonMiddleware (which needs the resolved language) —
+    # see Django's own i18n middleware ordering requirement.
+    'django.middleware.locale.LocaleMiddleware',
     # Re-resolve + activate the operator-selected timezone per request
     # so a Settings change is live without a restart. After sessions so
     # request teardown order is predictable; before the view runs.
@@ -458,6 +466,10 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Exposes LANGUAGE_CODE/LANGUAGES/LANGUAGE_BIDI in every
+                # template — used for <html lang="{{ LANGUAGE_CODE }}">
+                # and the navbar's language switcher.
+                'django.template.context_processors.i18n',
             ],
         },
     },
@@ -591,6 +603,20 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
+
+# The two languages the dashboard UI is actually translated into (see
+# LOCALE_PATHS below) — restricts LocaleMiddleware's Accept-Language
+# negotiation and the navbar's language switcher to these, rather than
+# Django's full built-in language list (which would silently 404/fall
+# back to English for anything we haven't translated).
+LANGUAGES = [
+    ('en', 'English'),
+    ('pt', 'Português'),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 USE_I18N = True
 

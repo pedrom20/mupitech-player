@@ -1,4 +1,5 @@
 {% load static %}
+{% load i18n %}
 {% comment %}
   Standalone error shell — does NOT extend base.html on purpose.
   base.html pulls vendor.js, which unconditionally opens a /ws
@@ -9,12 +10,12 @@
   so keep the asset list tight.
 {% endcomment %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="robots" content="noindex"/>
-  <title>{% block title %}Error — MupiTech{% endblock %}</title>
+  <title>{% block title %}{% translate "Error — MupiTech" %}{% endblock %}</title>
   <link href="{% static 'dist/css/tabler-icons.css' %}" rel="stylesheet"/>
   <link href="{% static 'dist/css/anthias.css' %}" rel="stylesheet"/>
   <link rel="icon" href="/static/favicons/favicon.ico"/>
@@ -32,12 +33,12 @@
       </div>
 
       <p class="error-card__code">{% block error_code %}{% endblock %}</p>
-      <h1 class="auth-headline">{% block error_headline %}Something went wrong{% endblock %}</h1>
+      <h1 class="auth-headline">{% block error_headline %}{% translate "Something went wrong" %}{% endblock %}</h1>
       <p class="auth-subhead">{% block error_subhead %}{% endblock %}</p>
 
       {% block error_cta %}
       <a href="{% url 'anthias_app:home' %}" class="app-btn app-btn-primary auth-submit">
-        <i class="ti ti-home"></i><span>Back to dashboard</span>
+        <i class="ti ti-home"></i><span>{% translate "Back to dashboard" %}</span>
       </a>
       {% endblock %}
     </div>

@@ -1,7 +1,8 @@
 {% extends "_layout.html" %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}{% if player_name %}{{ player_name }} · {% endif %}Schedule Overview{% endblock %}
+{% block title %}{% if player_name %}{{ player_name }} · {% endif %}{% translate "Schedule Overview" %}{% endblock %}
 
 {% block extra_head %}
 <script src="{% static 'dist/js/home.js' %}" defer></script>
@@ -11,26 +12,26 @@
 <div class="app-container" :class="{ 'has-bulk-selection': selectedIds.length }" x-data="homeApp()" @asset-saved.window="closeModal()" @bulk-done.window="onBulkDone($event)">
   <div class="page-header-bar">
     <div class="page-header-bar__title">
-      <h1 class="page-header">Schedule Overview</h1>
+      <h1 class="page-header">{% translate "Schedule Overview" %}</h1>
       <p class="page-header-bar__lede">
-        {% if player_name %}<strong>{{ player_name }}</strong> · {% endif %}Manage what plays on this screen.
+        {% if player_name %}<strong>{{ player_name }}</strong> · {% endif %}{% translate "Manage what plays on this screen." %}
       </p>
     </div>
     <div class="page-header-bar__actions">
       <form method="post" action="{% url 'anthias_app:assets_control' command='previous' %}" class="inline m-0">
         {% csrf_token %}
-        <button type="submit" class="app-btn app-btn-light app-btn-pill" title="Skip to previous asset">
-          <i class="ti ti-player-skip-back"></i><span class="hidden md:inline">Previous</span>
+        <button type="submit" class="app-btn app-btn-light app-btn-pill" title="{% translate 'Skip to previous asset' %}">
+          <i class="ti ti-player-skip-back"></i><span class="hidden md:inline">{% translate "Previous" %}</span>
         </button>
       </form>
       <form method="post" action="{% url 'anthias_app:assets_control' command='next' %}" class="inline m-0">
         {% csrf_token %}
-        <button type="submit" class="app-btn app-btn-light app-btn-pill" title="Skip to next asset">
-          <i class="ti ti-player-skip-forward"></i><span class="hidden md:inline">Next</span>
+        <button type="submit" class="app-btn app-btn-light app-btn-pill" title="{% translate 'Skip to next asset' %}">
+          <i class="ti ti-player-skip-forward"></i><span class="hidden md:inline">{% translate "Next" %}</span>
         </button>
       </form>
       <button type="button" id="add-asset-button" class="app-btn app-btn-primary app-btn-pill" @click="openAdd()">
-        <i class="ti ti-plus"></i><span>Add Asset</span>
+        <i class="ti ti-plus"></i><span>{% translate "Add Asset" %}</span>
       </button>
     </div>
   </div>
@@ -53,6 +54,7 @@
 
   {% comment %} Delete confirmation overlay — shared shell with the reboot/shutdown
      prompt on /settings (.modal-overlay + .modal-card pattern). {% endcomment %}
+  {% translate "this asset" as fallback_asset_label %}
   <div
     x-show="pendingDeleteId"
     x-cloak
@@ -63,24 +65,24 @@
   >
     <div class="modal-card modal-card--sm">
       <div class="modal-card__header">
-        <h2>Delete asset?</h2>
-        <button type="button" class="modal-card__close" @click="pendingDeleteId = null" aria-label="Close">
+        <h2>{% translate "Delete asset?" %}</h2>
+        <button type="button" class="modal-card__close" @click="pendingDeleteId = null" aria-label="{% translate 'Close' %}">
           <i class="ti ti-x"></i>
         </button>
       </div>
       <div class="modal-card__body">
         <p class="m-0">
-          You're about to delete
-          <strong x-text="pendingDeleteName || 'this asset'"></strong>.
-          This action cannot be undone.
+          {% translate "You're about to delete" %}
+          <strong x-text="pendingDeleteName || '{{ fallback_asset_label|escapejs }}'"></strong>.
+          {% translate "This action cannot be undone." %}
         </p>
       </div>
       <div class="modal-card__footer">
-        <button type="button" class="app-btn app-btn-link" @click="pendingDeleteId = null">Cancel</button>
+        <button type="button" class="app-btn app-btn-link" @click="pendingDeleteId = null">{% translate "Cancel" %}</button>
         <form method="post" :action="`/assets/${pendingDeleteId}/delete/`" class="inline m-0">
           {% csrf_token %}
           <button type="submit" class="app-btn app-btn-danger confirm-delete">
-            <i class="ti ti-trash"></i><span>Delete</span>
+            <i class="ti ti-trash"></i><span>{% translate "Delete" %}</span>
           </button>
         </form>
       </div>

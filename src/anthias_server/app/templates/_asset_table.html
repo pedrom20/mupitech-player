@@ -1,4 +1,5 @@
 {% load asset_filters %}
+{% load i18n %}
 {% comment %} Asset table partial. The wrapper carries id="asset-table"
    and the hx-get / hx-trigger pair that drive both the 5 s background
    poll and the refresh-assets event triggered after every write —
@@ -23,29 +24,29 @@
     <header class="surface__header">
       <div class="surface__header-left">
         {% if active_assets %}
-        <label class="asset-select asset-select--all" title="Select all enabled">
+        <label class="asset-select asset-select--all" title="{% translate 'Select all enabled' %}">
           <input type="checkbox" class="app-check-input"
             :checked="sectionAllSelected('active')"
             @change="toggleSection('active', $event.target.checked)"
             x-effect="$el.indeterminate = sectionSomeSelected('active')"
-            aria-label="Select all enabled assets">
+            aria-label="{% translate 'Select all enabled assets' %}">
         </label>
         {% endif %}
-        <h2><i class="ti ti-toggle-right mr-2"></i>Enabled</h2>
+        <h2><i class="ti ti-toggle-right mr-2"></i>{% translate "Enabled" context "assets section heading" %}</h2>
       </div>
-      <span class="surface__count">{{ active_assets|length }} item{{ active_assets|length|pluralize }}</span>
+      <span class="surface__count">{% blocktranslate count counter=active_assets|length %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}</span>
     </header>
 
     {% if active_assets %}
     <table class="asset-table">
       <thead>
         <tr>
-          <th scope="col" class="asset-select-col"><span class="sr-only">Select</span></th>
-          <th scope="col">Name</th>
-          <th scope="col" style="width: 28%">Schedule window</th>
-          <th scope="col" style="width: 10%">Duration</th>
-          <th scope="col" style="width: 8%">Enabled</th>
-          <th scope="col" style="width: 14%" class="text-right">Actions</th>
+          <th scope="col" class="asset-select-col"><span class="sr-only">{% translate "Select" %}</span></th>
+          <th scope="col">{% translate "Name" %}</th>
+          <th scope="col" style="width: 28%">{% translate "Schedule window" %}</th>
+          <th scope="col" style="width: 10%">{% translate "Duration" %}</th>
+          <th scope="col" style="width: 8%">{% translate "Enabled" %}</th>
+          <th scope="col" style="width: 14%" class="text-right">{% translate "Actions" %}</th>
         </tr>
       </thead>
       <tbody id="active-rows">
@@ -63,29 +64,29 @@
     <header class="surface__header">
       <div class="surface__header-left">
         {% if inactive_assets %}
-        <label class="asset-select asset-select--all" title="Select all inactive">
+        <label class="asset-select asset-select--all" title="{% translate 'Select all inactive' %}">
           <input type="checkbox" class="app-check-input"
             :checked="sectionAllSelected('inactive')"
             @change="toggleSection('inactive', $event.target.checked)"
             x-effect="$el.indeterminate = sectionSomeSelected('inactive')"
-            aria-label="Select all inactive assets">
+            aria-label="{% translate 'Select all inactive assets' %}">
         </label>
         {% endif %}
-        <h2><i class="ti ti-player-pause mr-2"></i>Inactive</h2>
+        <h2><i class="ti ti-player-pause mr-2"></i>{% translate "Inactive" %}</h2>
       </div>
-      <span class="surface__count">{{ inactive_assets|length }} item{{ inactive_assets|length|pluralize }}</span>
+      <span class="surface__count">{% blocktranslate count counter=inactive_assets|length %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}</span>
     </header>
 
     {% if inactive_assets %}
     <table class="asset-table">
       <thead>
         <tr>
-          <th scope="col" class="asset-select-col"><span class="sr-only">Select</span></th>
-          <th scope="col">Name</th>
-          <th scope="col" style="width: 28%">Schedule window</th>
-          <th scope="col" style="width: 10%">Duration</th>
-          <th scope="col" style="width: 8%">Enabled</th>
-          <th scope="col" style="width: 14%" class="text-right">Actions</th>
+          <th scope="col" class="asset-select-col"><span class="sr-only">{% translate "Select" %}</span></th>
+          <th scope="col">{% translate "Name" %}</th>
+          <th scope="col" style="width: 28%">{% translate "Schedule window" %}</th>
+          <th scope="col" style="width: 10%">{% translate "Duration" %}</th>
+          <th scope="col" style="width: 8%">{% translate "Enabled" %}</th>
+          <th scope="col" style="width: 14%" class="text-right">{% translate "Actions" %}</th>
         </tr>
       </thead>
       <tbody>

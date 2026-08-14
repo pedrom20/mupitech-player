@@ -38,6 +38,11 @@ class APIDocView(SpectacularRedocView):
 
 urlpatterns = [
     path('admin', admin.site.urls),
+    # django.views.i18n.set_language — POST target for the navbar's
+    # language switcher (see _navbar.html). Writes the chosen language
+    # into the session/cookie that LocaleMiddleware reads on every
+    # subsequent request.
+    path('i18n/', include('django.conf.urls.i18n')),
     path('api/', include('anthias_server.api.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', APIDocView.as_view(url_name='schema'), name='redoc'),

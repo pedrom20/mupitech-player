@@ -1,0 +1,240 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: mupitech-player\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-14 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: pt\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# --- _navbar.html ---
+msgid "Language"
+msgstr "Idioma"
+
+msgid "Toggle navigation"
+msgstr "Alternar navegação"
+
+msgid "Schedule"
+msgstr "Horário"
+
+msgid "Integrations"
+msgstr "Integrações"
+
+msgid "Settings"
+msgstr "Definições"
+
+msgid "System info"
+msgstr "Informação do sistema"
+
+# --- home.html ---
+msgid "Schedule Overview"
+msgstr "Vista Geral do Horário"
+
+msgid "Manage what plays on this screen."
+msgstr "Faça a gestão do que é reproduzido neste ecrã."
+
+msgid "Skip to previous asset"
+msgstr "Saltar para o conteúdo anterior"
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Skip to next asset"
+msgstr "Saltar para o conteúdo seguinte"
+
+msgid "Next"
+msgstr "Seguinte"
+
+msgid "Add Asset"
+msgstr "Adicionar Conteúdo"
+
+msgid "this asset"
+msgstr "este conteúdo"
+
+msgid "Delete asset?"
+msgstr "Eliminar conteúdo?"
+
+msgid "Close"
+msgstr "Fechar"
+
+msgid "You're about to delete"
+msgstr "Está prestes a eliminar"
+
+msgid "This action cannot be undone."
+msgstr "Esta ação não pode ser desfeita."
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Delete"
+msgstr "Eliminar"
+
+# --- _empty_assets.html ---
+msgid "No active assets"
+msgstr "Sem conteúdos ativos"
+
+msgid "No inactive assets"
+msgstr "Sem conteúdos inativos"
+
+msgid "Assets you toggle on appear here and play on the screen."
+msgstr "Os conteúdos que ativar aparecem aqui e são reproduzidos no ecrã."
+
+msgid "Assets you toggle off — or that haven't been enabled yet — appear here."
+msgstr "Os conteúdos que desativar — ou que ainda não foram ativados — aparecem aqui."
+
+msgid "Add an asset"
+msgstr "Adicionar um conteúdo"
+
+# --- _asset_table.html ---
+msgid "Select all enabled"
+msgstr "Selecionar todos os ativados"
+
+msgid "Select all enabled assets"
+msgstr "Selecionar todos os conteúdos ativados"
+
+msgctxt "assets section heading"
+msgid "Enabled"
+msgstr "Ativados"
+
+msgid "Enabled"
+msgstr "Ativo"
+
+msgid "%(counter)s item"
+msgid_plural "%(counter)s items"
+msgstr[0] "%(counter)s elemento"
+msgstr[1] "%(counter)s elementos"
+
+msgid "Select"
+msgstr "Selecionar"
+
+msgid "Name"
+msgstr "Nome"
+
+msgid "Schedule window"
+msgstr "Janela de horário"
+
+msgid "Duration"
+msgstr "Duração"
+
+msgid "Actions"
+msgstr "Ações"
+
+msgid "Select all inactive"
+msgstr "Selecionar todos os inativos"
+
+msgid "Select all inactive assets"
+msgstr "Selecionar todos os conteúdos inativos"
+
+msgid "Inactive"
+msgstr "Inativos"
+
+# --- _asset_row.html ---
+msgid "asset"
+msgstr "conteúdo"
+
+msgid "Select %(name)s"
+msgstr "Selecionar %(name)s"
+
+msgid "Drag to reorder"
+msgstr "Arrastar para reordenar"
+
+msgid "Processing"
+msgstr "A processar"
+
+msgid "Processing failed: %(error)s — click to view details"
+msgstr "Falha no processamento: %(error)s — clique para ver detalhes"
+
+msgid "Failed"
+msgstr "Falhou"
+
+msgid "Toggle active"
+msgstr "Alternar ativo"
+
+msgid "Preview"
+msgstr "Pré-visualizar"
+
+msgid "Download"
+msgstr "Transferir"
+
+msgid "Edit"
+msgstr "Editar"
+
+# --- _toasts.html ---
+msgid "Dismiss"
+msgstr "Fechar"
+
+# --- login.html ---
+msgid "Login to MupiTech"
+msgstr "Entrar no MupiTech"
+
+msgid "Welcome back"
+msgstr "Bem-vindo de volta"
+
+msgid "Sign in to manage what plays on your screen."
+msgstr "Inicie sessão para gerir o que é reproduzido no seu ecrã."
+
+msgid "Username"
+msgstr "Utilizador"
+
+msgid "Password"
+msgstr "Palavra-passe"
+
+msgid "Sign in"
+msgstr "Iniciar sessão"
+
+# --- _error.html + 400/403/404/500/403_csrf ---
+msgid "Error — MupiTech"
+msgstr "Erro — MupiTech"
+
+msgid "Something went wrong"
+msgstr "Algo correu mal"
+
+msgid "Back to dashboard"
+msgstr "Voltar ao painel"
+
+msgid "Bad request — MupiTech"
+msgstr "Pedido inválido — MupiTech"
+
+msgid "Bad request"
+msgstr "Pedido inválido"
+
+msgid "The server couldn't understand that request. Try going back and re-submitting."
+msgstr "O servidor não conseguiu entender o pedido. Volte atrás e tente novamente."
+
+msgid "Forbidden — MupiTech"
+msgstr "Acesso negado — MupiTech"
+
+msgid "You can't access this page"
+msgstr "Não tem acesso a esta página"
+
+msgid "This URL is restricted — by an IP allow-list, an internal-auth check, or a permission boundary. Contact your operator if you believe this is wrong."
+msgstr "Este endereço está restrito — por uma lista de IPs permitidos, uma verificação interna de autenticação, ou um limite de permissões. Contacte o seu operador se acha que isto está errado."
+
+msgid "Page not found — MupiTech"
+msgstr "Página não encontrada — MupiTech"
+
+msgid "Page not found"
+msgstr "Página não encontrada"
+
+msgid "The page you were looking for has moved, been removed, or never existed."
+msgstr "A página que procurava foi movida, removida, ou nunca existiu."
+
+msgid "Server error — MupiTech"
+msgstr "Erro do servidor — MupiTech"
+
+msgid "Something broke on our end"
+msgstr "Algo correu mal do nosso lado"
+
+msgid "The server hit an unexpected error. Try reloading; if it persists, check the device logs."
+msgstr "O servidor teve um erro inesperado. Tente recarregar a página; se persistir, verifique os registos do dispositivo."
+
+msgid "Session expired — MupiTech"
+msgstr "Sessão expirada — MupiTech"
+
+msgid "Your session expired"
+msgstr "A sua sessão expirou"
+
+msgid "The form's security token didn't match. Reload the page and try again."
+msgstr "O token de segurança do formulário não corresponde. Recarregue a página e tente novamente."

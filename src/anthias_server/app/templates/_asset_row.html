@@ -1,17 +1,25 @@
 {% load asset_filters %}
+{% load i18n %}
 {% with pills=asset|schedule_pills %}
+{% translate "Select" as select_label %}
+{% translate "Name" as name_label %}
+{% translate "Schedule window" as schedule_window_label %}
+{% translate "Duration" as duration_label %}
+{% translate "Enabled" as enabled_label %}
+{% translate "Actions" as actions_label %}
+{% translate "asset" as asset_fallback_label %}
 <tr data-asset-id="{{ asset.asset_id }}" data-processing="{{ asset.is_processing|yesno:'true,false' }}" data-name="{{ asset.name|default:''|escape }}" data-duration="{{ asset.duration|default:0 }}" :class="isSelected('{{ asset.asset_id }}') && 'is-selected'">
-  <td class="asset-select-col" data-label="Select" data-no-label>
+  <td class="asset-select-col" data-label="{{ select_label }}" data-no-label>
     <label class="asset-select">
       <input type="checkbox" class="app-check-input js-row-select"
         :checked="isSelected('{{ asset.asset_id }}')"
         @change="toggleSelect('{{ asset.asset_id }}')"
-        aria-label="Select {{ asset.name|default:'asset'|escape }}">
+        aria-label="{% blocktranslate with name=asset.name|default:asset_fallback_label|escape %}Select {{ name }}{% endblocktranslate %}">
     </label>
   </td>
-  <td data-label="Name" data-no-label>
+  <td data-label="{{ name_label }}" data-no-label>
     <div class="asset-cell-name">
-      {% if is_active %}<i class="ti ti-grip-vertical drag-handle" title="Drag to reorder"></i>{% endif %}
+      {% if is_active %}<i class="ti ti-grip-vertical drag-handle" title="{% translate 'Drag to reorder' %}"></i>{% endif %}
       <span class="asset-cell-name__icon">
         {% if asset.mimetype == 'image' %}<i class="ti ti-photo"></i>
         {% elif asset.mimetype == 'video' %}<i class="ti ti-video"></i>
@@ -36,7 +44,7 @@
     </div>
   </td>
   {% with window=asset|schedule_window %}
-  <td data-label="Schedule window">
+  <td data-label="{{ schedule_window_label }}">
     <div class="schedule-window schedule-window--{{ window.kind }}">
       <div class="schedule-window__dot" aria-hidden="true"></div>
       <div>
@@ -46,10 +54,10 @@
     </div>
   </td>
   {% endwith %}
-  <td data-label="Duration">{{ asset.duration|humanize_duration }}</td>
-  <td data-label="Enabled">
+  <td data-label="{{ duration_label }}">{{ asset.duration|humanize_duration }}</td>
+  <td data-label="{{ enabled_label }}">
     {% if asset.is_processing %}
-    <span class="processing-pill"><i class="ti ti-refresh"></i>Processing</span>
+    <span class="processing-pill"><i class="ti ti-refresh"></i>{% translate "Processing" %}</span>
     {% elif asset.metadata.error_message %}
     {% comment %} Processing failed and the celery task wrote
        metadata.error_message via _NormalizeAssetTask.on_failure.
@@ -61,9 +69,9 @@
     <button type="button"
           class="error-pill"
           title="{{ asset.metadata.error_message }}"
-          aria-label="Processing failed: {{ asset.metadata.error_message }} — click to view details"
+          aria-label="{% blocktranslate with error=asset.metadata.error_message %}Processing failed: {{ error }} — click to view details{% endblocktranslate %}"
           @click='openEdit({{ asset|to_json }})'>
-      <i class="ti ti-alert-triangle"></i>Failed
+      <i class="ti ti-alert-triangle"></i>{% translate "Failed" %}
     </button>
     {% else %}
     <form method="post" action="{% url 'anthias_app:assets_toggle' asset_id=asset.asset_id %}" class="m-0">
@@ -73,36 +81,36 @@
           type="checkbox"
           class="app-check-input"
           {% if asset.is_enabled %}checked{% endif %}
-          aria-label="Toggle active"
+          aria-label="{% translate 'Toggle active' %}"
           onchange="this.form.requestSubmit()"
         >
       </div>
     </form>
     {% endif %}
   </td>
-  <td class="text-right" data-label="Actions">
+  <td class="text-right" data-label="{{ actions_label }}">
     <div class="action-group">
       <button
         type="button"
         class="app-btn app-btn-icon"
-        title="Preview"
+        title="{% translate 'Preview' %}"
         @click='openPreview({{ asset|to_json }})'
       ><i class="ti ti-eye"></i></button>
       <a
         href="{% url 'anthias_app:assets_download' asset_id=asset.asset_id %}"
         class="app-btn app-btn-icon"
-        title="Download"
+        title="{% translate 'Download' %}"
       ><i class="ti ti-download"></i></a>
       <button
         type="button"
         class="app-btn app-btn-icon"
-        title="Edit"
+        title="{% translate 'Edit' %}"
         @click='openEdit({{ asset|to_json }})'
       ><i class="ti ti-pencil"></i></button>
       <button
         type="button"
         class="app-btn app-btn-icon"
-        title="Delete"
+        title="{% translate 'Delete' %}"
         @click="openDelete('{{ asset.asset_id }}', '{{ asset.name|default:''|escapejs }}')"
       ><i class="ti ti-trash"></i></button>
     </div>

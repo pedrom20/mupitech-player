@@ -1,16 +1,29 @@
 {% load static %}
+{% load i18n %}
 <nav class="app-nav fixed top-0 inset-x-0 z-50" x-data="{ open: false }">
   <div class="app-container flex flex-wrap items-center gap-3 py-3">
     <a href="{% url 'anthias_app:home' %}" class="app-nav-brand">
       <img src="{% static 'img/logo-full.svg' %}" alt="MupiTech">
     </a>
 
+    {% get_current_language as CURRENT_LANGUAGE %}
+    <form action="{% url 'set_language' %}" method="post" class="app-lang-switcher ml-auto lg:ml-0">
+      {% csrf_token %}
+      <input name="next" type="hidden" value="{{ request.path }}">
+      <select name="language" class="app-lang-switcher__select" onchange="this.form.submit()" aria-label="{% translate 'Language' %}">
+        {% get_available_languages as AVAILABLE_LANGUAGES %}
+        {% for lang_code, lang_name in AVAILABLE_LANGUAGES %}
+        <option value="{{ lang_code }}" {% if lang_code == CURRENT_LANGUAGE %}selected{% endif %}>{{ lang_name }}</option>
+        {% endfor %}
+      </select>
+    </form>
+
     <button
-      class="app-nav-toggler ml-auto lg:hidden"
+      class="app-nav-toggler lg:hidden"
       type="button"
       :aria-expanded="open"
       aria-controls="navbarNav"
-      aria-label="Toggle navigation"
+      aria-label="{% translate 'Toggle navigation' %}"
       @click="open = !open"
     >
       <i class="ti ti-menu-2"></i>
@@ -30,7 +43,7 @@
             @click="open = false"
           >
             <i class="ti ti-playlist"></i>
-            <span>Schedule</span>
+            <span>{% translate "Schedule" %}</span>
           </a>
         </li>
 
@@ -42,7 +55,7 @@
             @click="open = false"
           >
             <i class="ti ti-puzzle"></i>
-            <span>Integrations</span>
+            <span>{% translate "Integrations" %}</span>
           </a>
         </li>
         {% endif %}
@@ -54,7 +67,7 @@
             @click="open = false"
           >
             <i class="ti ti-settings"></i>
-            <span>Settings</span>
+            <span>{% translate "Settings" %}</span>
           </a>
         </li>
 
@@ -69,7 +82,7 @@
             @click="open = false"
           >
             <i class="ti ti-activity"></i>
-            <span>System info</span>
+            <span>{% translate "System info" %}</span>
           </a>
         </li>
       </ul>

@@ -50,11 +50,13 @@ RUN bun run build
 {% include 'Dockerfile.base.j2' %}
 
 # MupiTech addition (not upstream Anthias): v4l-utils provides ir-ctl,
-# used by anthias_server/lib/mupitech_ir.py. Kept as its own isolated
-# RUN block, right after the shared base include, so upstream merges
-# only ever need to re-apply this one small hunk.
+# used by anthias_server/lib/mupitech_ir.py. gettext provides msgfmt,
+# needed below to compile locale/pt/LC_MESSAGES/django.po into the
+# .mo Django actually loads at runtime — kept as its own isolated RUN
+# block, right after the shared base include, so upstream merges only
+# ever need to re-apply this one small hunk.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends v4l-utils && \
+    apt-get install -y --no-install-recommends v4l-utils gettext && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=uv-builder /venv /venv
@@ -100,6 +102,13 @@ ENV PYTHONPATH="/usr/src/app/src"
 RUN mkdir -p /tmp/anthias-build/.anthias && \
     HOME=/tmp/anthias-build python -m anthias_server.manage collectstatic --noinput --clear && \
     rm -rf /tmp/anthias-build
+
+# Recompile locale/pt/LC_MESSAGES/django.po into the .mo Django actually
+# loads at runtime. A compiled .mo is also checked into git directly
+# (so dev/test environments — which skip this production-only stage —
+# still get working translations), but rebuilding it fresh here means
+# a .po edit that forgot a local `msgfmt` run still ships correctly.
+RUN python -m anthias_server.manage compilemessages
 {% endif %}
 
 CMD ["bash", "bin/start_server.sh"]

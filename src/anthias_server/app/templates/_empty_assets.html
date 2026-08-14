@@ -1,16 +1,17 @@
+{% load i18n %}
 <div class="empty-state">
   <div class="empty-state__icon">
     <i class="ti ti-{% if is_active %}playlist{% else %}archive{% endif %}"></i>
   </div>
   <p class="empty-state__title">
-    {% if is_active %}No active assets{% else %}No inactive assets{% endif %}
+    {% if is_active %}{% translate "No active assets" %}{% else %}{% translate "No inactive assets" %}{% endif %}
   </p>
   <p class="empty-state__description">
-    {% if is_active %}Assets you toggle on appear here and play on the screen.
-    {% else %}Assets you toggle off — or that haven't been enabled yet — appear here.
+    {% if is_active %}{% translate "Assets you toggle on appear here and play on the screen." %}
+    {% else %}{% translate "Assets you toggle off — or that haven't been enabled yet — appear here." %}
     {% endif %}
   </p>
   <button type="button" class="empty-state__action" @click="openAdd()">
-    <i class="ti ti-plus mr-1"></i>Add an asset
+    <i class="ti ti-plus mr-1"></i>{% translate "Add an asset" %}
   </button>
 </div>

@@ -1,7 +1,8 @@
 {% extends "_error.html" %}
+{% load i18n %}
 
-{% block title %}Forbidden — Anthias{% endblock %}
+{% block title %}{% translate "Forbidden — MupiTech" %}{% endblock %}
 {% block error_icon %}ti-lock{% endblock %}
 {% block error_code %}403{% endblock %}
-{% block error_headline %}You can't access this page{% endblock %}
-{% block error_subhead %}This URL is restricted — by an IP allow-list, an internal-auth check, or a permission boundary. Contact your operator if you believe this is wrong.{% endblock %}
+{% block error_headline %}{% translate "You can't access this page" %}{% endblock %}
+{% block error_subhead %}{% translate "This URL is restricted — by an IP allow-list, an internal-auth check, or a permission boundary. Contact your operator if you believe this is wrong." %}{% endblock %}

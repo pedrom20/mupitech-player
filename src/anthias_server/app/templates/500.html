@@ -1,8 +1,13 @@
 {% extends "_error.html" %}
-{# Django renders 500.html without RequestContext — keep self-contained. #}
+{% load i18n %}
+{# Django renders 500.html without RequestContext — keep self-contained.
+   {% translate %} still works (translation activation is a thread-local
+   set by LocaleMiddleware during request processing, not something the
+   template context carries), only {{ LANGUAGE_CODE }} in _error.html's
+   <html lang="..."> falls back to empty on this one page. #}
 
-{% block title %}Server error — Anthias{% endblock %}
+{% block title %}{% translate "Server error — MupiTech" %}{% endblock %}
 {% block error_icon %}ti-bug{% endblock %}
 {% block error_code %}500{% endblock %}
-{% block error_headline %}Something broke on our end{% endblock %}
-{% block error_subhead %}The server hit an unexpected error. Try reloading; if it persists, check the device logs.{% endblock %}
+{% block error_headline %}{% translate "Something broke on our end" %}{% endblock %}
+{% block error_subhead %}{% translate "The server hit an unexpected error. Try reloading; if it persists, check the device logs." %}{% endblock %}
