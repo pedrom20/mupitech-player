@@ -440,12 +440,12 @@ def test_splash_view_does_not_import_get_node_ip() -> None:
 def test_splash_renders_with_polling_script() -> None:
     """The splash relies on the JS poll to populate IPs. If the
     script tag goes missing (template refactor, CSP, etc.), the
-    page would forever show 'Detecting network…' even when IPs
+    page would forever show 'A detetar rede…' even when IPs
     are available — catch that here."""
     response = Client().get('/splash-page/')
     body = response.content.decode()
     assert '/api/v2/network/ip-addresses' in body
-    assert 'Detecting network' in body
+    assert 'A detetar rede' in body
 
 
 @pytest.mark.django_db
@@ -453,7 +453,7 @@ def test_splash_template_references_built_bundle() -> None:
     """Template-only check: the splash points at dist/js/splash.js
     rather than carrying its old inline IIFE. A template refactor
     that dropped the <script> tag would leave operators stuck on
-    'Detecting network…' — all other splash tests would still pass
+    'A detetar rede…' — all other splash tests would still pass
     because this is the only path that exercises the bundle wiring.
     The companion integration test below also asserts the file
     actually exists on the build path."""
