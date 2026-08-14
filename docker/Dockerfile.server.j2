@@ -98,17 +98,20 @@ ENV PYTHONPATH="/usr/src/app/src"
 # anthias.conf into $HOME/.anthias/ if one isn't there yet. At runtime
 # start_server.sh seeds /data/.anthias from ansible/roles/anthias/files/
 # before this same import happens; at build time we just give it a
-# scratch dir and remove it after collectstatic finishes.
+# scratch dir and remove it once both management commands below finish.
+#
+# compilemessages recompiles locale/pt/LC_MESSAGES/django.po into the
+# .mo Django actually loads at runtime. A compiled .mo is also checked
+# into git directly (so dev/test environments — which skip this
+# production-only stage — still get working translations), but
+# rebuilding it fresh here means a .po edit that forgot a local
+# `msgfmt` run still ships correctly. It shares collectstatic's
+# scratch HOME for the same settings-import reason, and must run
+# before `rm -rf /tmp/anthias-build` removes it.
 RUN mkdir -p /tmp/anthias-build/.anthias && \
     HOME=/tmp/anthias-build python -m anthias_server.manage collectstatic --noinput --clear && \
+    HOME=/tmp/anthias-build python -m anthias_server.manage compilemessages && \
     rm -rf /tmp/anthias-build
-
-# Recompile locale/pt/LC_MESSAGES/django.po into the .mo Django actually
-# loads at runtime. A compiled .mo is also checked into git directly
-# (so dev/test environments — which skip this production-only stage —
-# still get working translations), but rebuilding it fresh here means
-# a .po edit that forgot a local `msgfmt` run still ships correctly.
-RUN python -m anthias_server.manage compilemessages
 {% endif %}
 
 CMD ["bash", "bin/start_server.sh"]
