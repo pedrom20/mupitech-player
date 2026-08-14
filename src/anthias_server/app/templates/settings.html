@@ -1,14 +1,21 @@
 {% extends "_layout.html" %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}{% if player_name %}{{ player_name }} · {% endif %}Settings{% endblock %}
+{% block title %}{% if player_name %}{{ player_name }} · {% endif %}{% translate "Settings" %}{% endblock %}
 
 {% block main %}
+{% translate "Reboot device?" as label_reboot_q %}
+{% translate "Shut down device?" as label_shutdown_q %}
+{% translate "The device will reboot now. The screen will go dark for about a minute." as label_reboot_body %}
+{% translate "The device will power off now. You may need to unplug and replug to bring it back up." as label_shutdown_body %}
+{% translate "Reboot now" as label_reboot_now %}
+{% translate "Shut down" as label_shutdown_now %}
 <div class="app-container">
   <div class="page-header-bar">
     <div class="page-header-bar__title">
-      <h1 class="page-header">Settings</h1>
-      <p class="page-header-bar__lede">Configure how this player behaves and what it should display.</p>
+      <h1 class="page-header">{% translate "Settings" %}</h1>
+      <p class="page-header-bar__lede">{% translate "Configure how this player behaves and what it should display." %}</p>
     </div>
   </div>
 
@@ -26,13 +33,13 @@
     <section class="settings-section">
       <header>
         <div>
-          <h2>Player identity</h2>
-          <p class="settings-section__lede">A friendly name shown in this UI and in the page title.</p>
+          <h2>{% translate "Player identity" %}</h2>
+          <p class="settings-section__lede">{% translate "A friendly name shown in this UI and in the page title." %}</p>
         </div>
       </header>
       <div class="app-floating">
         <input type="text" class="app-input" id="player_name" name="player_name" value="{{ player_name }}" placeholder=" ">
-        <label for="player_name">Player name</label>
+        <label for="player_name">{% translate "Player name" %}</label>
       </div>
     </section>
 
@@ -40,31 +47,31 @@
     <section class="settings-section">
       <header>
         <div>
-          <h2>Display & playback</h2>
-          <p class="settings-section__lede">Defaults, audio, timezone, and display.</p>
+          <h2>{% translate "Display &amp; playback" %}</h2>
+          <p class="settings-section__lede">{% translate "Defaults, audio, timezone, and display." %}</p>
         </div>
       </header>
 
       <div class="app-form-grid mb-4">
         <div class="app-floating">
           <input type="number" class="app-input" id="default_duration" name="default_duration" value="{{ default_duration }}" placeholder=" " required>
-          <label for="default_duration">Default duration (seconds)</label>
+          <label for="default_duration">{% translate "Default duration (seconds)" %}</label>
         </div>
         <div class="app-floating">
           <input type="number" class="app-input" id="default_streaming_duration" name="default_streaming_duration" value="{{ default_streaming_duration }}" placeholder=" " required>
-          <label for="default_streaming_duration">Default streaming duration (seconds)</label>
+          <label for="default_streaming_duration">{% translate "Default streaming duration (seconds)" %}</label>
         </div>
       </div>
 
       <div class="app-form-grid mb-4">
         <div class="app-floating">
           <select class="app-select" id="audio_output" name="audio_output">
-            <option value="hdmi" {% if audio_output == 'hdmi' %}selected{% endif %}>HDMI</option>
+            <option value="hdmi" {% if audio_output == 'hdmi' %}selected{% endif %}>{% translate "HDMI" %}</option>
             {% if not is_pi5 %}
-            <option value="local" {% if audio_output == 'local' %}selected{% endif %}>3.5mm jack</option>
+            <option value="local" {% if audio_output == 'local' %}selected{% endif %}>{% translate "3.5mm jack" %}</option>
             {% endif %}
           </select>
-          <label for="audio_output">Audio output</label>
+          <label for="audio_output">{% translate "Audio output" %}</label>
         </div>
 
         <div class="app-floating">
@@ -73,7 +80,7 @@
             <option value="{{ value }}" {% if date_format == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-          <label for="date_format">Date format</label>
+          <label for="date_format">{% translate "Date format" %}</label>
         </div>
 
         <div class="app-floating">
@@ -82,28 +89,35 @@
             <option value="{{ value }}" {% if timezone == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-          <label for="timezone">Timezone</label>
+          <label for="timezone">{% translate "Timezone" %}</label>
         </div>
 
         <div class="app-floating">
           <select class="app-select" id="screen_rotation" name="screen_rotation">
-            <option value="0" {% if screen_rotation == 0 %}selected{% endif %}>Landscape (0°)</option>
-            <option value="90" {% if screen_rotation == 90 %}selected{% endif %}>Portrait (90°)</option>
-            <option value="180" {% if screen_rotation == 180 %}selected{% endif %}>Landscape, inverted (180°)</option>
-            <option value="270" {% if screen_rotation == 270 %}selected{% endif %}>Portrait, inverted (270°)</option>
+            <option value="0" {% if screen_rotation == 0 %}selected{% endif %}>{% translate "Landscape (0°)" %}</option>
+            <option value="90" {% if screen_rotation == 90 %}selected{% endif %}>{% translate "Portrait (90°)" %}</option>
+            <option value="180" {% if screen_rotation == 180 %}selected{% endif %}>{% translate "Landscape, inverted (180°)" %}</option>
+            <option value="270" {% if screen_rotation == 270 %}selected{% endif %}>{% translate "Portrait, inverted (270°)" %}</option>
           </select>
-          <label for="screen_rotation">Screen rotation</label>
+          <label for="screen_rotation">{% translate "Screen rotation" %}</label>
         </div>
       </div>
 
       <div>
-        {% include "_settings_toggle.html" with name="show_splash" label="Show splash screen" hint="Display the device's IP address on screen at boot." checked=show_splash %}
-        {% include "_settings_toggle.html" with name="default_assets" label="Include default sample assets" hint="Auto-add the bundled sample assets to a fresh playlist." checked=default_assets %}
-        {% include "_settings_toggle.html" with name="shuffle_playlist" label="Shuffle playlist" hint="Randomise the play order on every loop." checked=shuffle_playlist %}
-        {% include "_settings_toggle.html" with name="prefer_dark_mode" label="Prefer dark mode" hint="Ask web page assets to render in dark mode where they support it." checked=prefer_dark_mode %}
-        {% include "_settings_toggle.html" with name="use_24_hour_clock" label="Use 24-hour clock" hint="Display times in 24-hour format across the UI." checked=use_24_hour_clock %}
-        {% include "_settings_toggle.html" with name="debug_logging" label="Debug logging" hint="Verbose viewer logs. Leave off unless you're chasing a problem." checked=debug_logging %}
-        {% include "_settings_toggle.html" with name="verify_ssl" label="Verify SSL certificates" hint="Keep on. Turn off only to allow media or web pages served over HTTPS with a self-signed or untrusted certificate (e.g. an intranet host). Disables certificate checks device-wide." checked=verify_ssl %}
+        {% translate "Show splash screen" as t_label %}{% translate "Display the device's IP address on screen at boot." as t_hint %}
+        {% include "_settings_toggle.html" with name="show_splash" label=t_label hint=t_hint checked=show_splash %}
+        {% translate "Include default sample assets" as t_label %}{% translate "Auto-add the bundled sample assets to a fresh playlist." as t_hint %}
+        {% include "_settings_toggle.html" with name="default_assets" label=t_label hint=t_hint checked=default_assets %}
+        {% translate "Shuffle playlist" as t_label %}{% translate "Randomise the play order on every loop." as t_hint %}
+        {% include "_settings_toggle.html" with name="shuffle_playlist" label=t_label hint=t_hint checked=shuffle_playlist %}
+        {% translate "Prefer dark mode" as t_label %}{% translate "Ask web page assets to render in dark mode where they support it." as t_hint %}
+        {% include "_settings_toggle.html" with name="prefer_dark_mode" label=t_label hint=t_hint checked=prefer_dark_mode %}
+        {% translate "Use 24-hour clock" as t_label %}{% translate "Display times in 24-hour format across the UI." as t_hint %}
+        {% include "_settings_toggle.html" with name="use_24_hour_clock" label=t_label hint=t_hint checked=use_24_hour_clock %}
+        {% translate "Debug logging" as t_label %}{% translate "Verbose viewer logs. Leave off unless you're chasing a problem." as t_hint %}
+        {% include "_settings_toggle.html" with name="debug_logging" label=t_label hint=t_hint checked=debug_logging %}
+        {% translate "Verify SSL certificates" as t_label %}{% translate "Keep on. Turn off only to allow media or web pages served over HTTPS with a self-signed or untrusted certificate (e.g. an intranet host). Disables certificate checks device-wide." as t_hint %}
+        {% include "_settings_toggle.html" with name="verify_ssl" label=t_label hint=t_hint checked=verify_ssl %}
       </div>
     </section>
 
@@ -111,23 +125,23 @@
     <section class="settings-section">
       <header>
         <div>
-          <h2>Authentication</h2>
-          <p class="settings-section__lede">Restrict access to this management UI. Leave disabled on a trusted LAN.</p>
+          <h2>{% translate "Authentication" %}</h2>
+          <p class="settings-section__lede">{% translate "Restrict access to this management UI. Leave disabled on a trusted LAN." %}</p>
         </div>
       </header>
 
       <div class="app-floating mb-3">
         <select class="app-select" id="auth_backend" name="auth_backend" x-model="authBackend">
-          <option value="">Disabled</option>
-          <option value="auth_basic" {% if auth_backend == 'auth_basic' %}selected{% endif %}>Basic auth</option>
+          <option value="">{% translate "Disabled" %}</option>
+          <option value="auth_basic" {% if auth_backend == 'auth_basic' %}selected{% endif %}>{% translate "Basic auth" %}</option>
         </select>
-        <label for="auth_backend">Method</label>
+        <label for="auth_backend">{% translate "Method" %}</label>
       </div>
 
       {% if has_saved_basic_auth %}
       <div class="app-floating mb-3" x-show="authBackend === 'auth_basic' || '{{ auth_backend }}' === 'auth_basic'">
         <input type="password" class="app-input" id="current_password" name="current_password" placeholder=" " autocomplete="current-password">
-        <label for="current_password">Current password</label>
+        <label for="current_password">{% translate "Current password" %}</label>
       </div>
       {% endif %}
 
@@ -135,16 +149,16 @@
         <div>
           <div class="app-floating mb-3">
             <input type="text" class="app-input" id="user" name="user" value="{{ username }}" placeholder=" " autocomplete="username">
-            <label for="user">Username</label>
+            <label for="user">{% translate "Username" %}</label>
           </div>
           <div class="app-form-grid">
             <div class="app-floating">
               <input type="password" class="app-input" id="password" name="password" placeholder=" " autocomplete="new-password">
-              <label for="password">New password</label>
+              <label for="password">{% translate "New password" %}</label>
             </div>
             <div class="app-floating">
               <input type="password" class="app-input" id="password_2" name="password_2" placeholder=" " autocomplete="new-password">
-              <label for="password_2">Confirm new password</label>
+              <label for="password_2">{% translate "Confirm new password" %}</label>
             </div>
           </div>
         </div>
@@ -153,7 +167,7 @@
 
     <div class="flex justify-end">
       <button type="submit" class="app-btn app-btn-primary">
-        <i class="ti ti-check"></i><span>Save settings</span>
+        <i class="ti ti-check"></i><span>{% translate "Save settings" %}</span>
       </button>
     </div>
   </form>
@@ -169,8 +183,8 @@
   <section class="settings-section mt-4">
     <header>
       <div>
-        <h2>Import content</h2>
-        <p class="settings-section__lede">Bring media in from another digital signage platform.</p>
+        <h2>{% translate "Import content" %}</h2>
+        <p class="settings-section__lede">{% translate "Bring media in from another digital signage platform." %}</p>
       </div>
     </header>
     {% for provider in import_providers %}
@@ -181,7 +195,7 @@
       </div>
       <div class="settings-section__actions">
         <a href="{% url 'anthias_app:import_content' provider.key %}" class="app-btn app-btn-outline-dark">
-          <i class="ti ti-download"></i><span>Import from {{ provider.label }}</span>
+          <i class="ti ti-download"></i><span>{% blocktranslate with provider_label=provider.label %}Import from {{ provider_label }}{% endblocktranslate %}</span>
         </a>
       </div>
     </div>
@@ -193,14 +207,14 @@
   <section class="settings-section mt-4">
     <header>
       <div>
-        <h2>Backup & restore</h2>
-        <p class="settings-section__lede">Download a tarball of your settings and asset metadata, or recover from one.</p>
+        <h2>{% translate "Backup &amp; restore" %}</h2>
+        <p class="settings-section__lede">{% translate "Download a tarball of your settings and asset metadata, or recover from one." %}</p>
       </div>
       <div class="settings-section__actions" x-data>
         <form method="post" action="{% url 'anthias_app:settings_backup' %}" class="inline m-0">
           {% csrf_token %}
           <button type="submit" id="btn-backup" class="app-btn app-btn-outline-dark">
-            <i class="ti ti-download"></i><span>Get backup</span>
+            <i class="ti ti-download"></i><span>{% translate "Get backup" %}</span>
           </button>
         </form>
         <form method="post" action="{% url 'anthias_app:settings_recover' %}" enctype="multipart/form-data" class="inline m-0">
@@ -215,7 +229,7 @@
           >
           <button type="button" id="btn-upload" class="app-btn app-btn-primary"
             @click="document.getElementById('backup_upload').click()">
-            <i class="ti ti-upload"></i><span>Upload &amp; recover</span>
+            <i class="ti ti-upload"></i><span>{% translate "Upload &amp; recover" %}</span>
           </button>
         </form>
       </div>
@@ -226,15 +240,15 @@
   <section class="settings-section mt-4" x-data="{ pending: null }">
     <header>
       <div>
-        <h2>System controls</h2>
-        <p class="settings-section__lede">Reboot or power down the device. Both prompt for confirmation.</p>
+        <h2>{% translate "System controls" %}</h2>
+        <p class="settings-section__lede">{% translate "Reboot or power down the device. Both prompt for confirmation." %}</p>
       </div>
       <div class="settings-section__actions">
         <button type="button" class="app-btn app-btn-outline-dark" @click="pending = 'reboot'">
-          <i class="ti ti-rotate-clockwise"></i><span>Reboot</span>
+          <i class="ti ti-rotate-clockwise"></i><span>{% translate "Reboot" %}</span>
         </button>
         <button type="button" class="app-btn app-btn-danger" @click="pending = 'shutdown'">
-          <i class="ti ti-power"></i><span>Shutdown</span>
+          <i class="ti ti-power"></i><span>{% translate "Shutdown" %}</span>
         </button>
       </div>
     </header>
@@ -248,25 +262,25 @@
     >
       <div class="modal-card modal-card--sm">
         <div class="modal-card__header">
-          <h2 x-text="pending === 'reboot' ? 'Reboot device?' : 'Shut down device?'"></h2>
-          <button type="button" class="modal-card__close" @click="pending = null" aria-label="Close">
+          <h2 x-text="pending === 'reboot' ? '{{ label_reboot_q|escapejs }}' : '{{ label_shutdown_q|escapejs }}'"></h2>
+          <button type="button" class="modal-card__close" @click="pending = null" aria-label="{% translate 'Close' %}">
             <i class="ti ti-x"></i>
           </button>
         </div>
         <div class="modal-card__body">
           <p class="m-0" x-text="pending === 'reboot'
-            ? 'The device will reboot now. The screen will go dark for about a minute.'
-            : 'The device will power off now. You may need to unplug and replug to bring it back up.'"></p>
+            ? '{{ label_reboot_body|escapejs }}'
+            : '{{ label_shutdown_body|escapejs }}'"></p>
         </div>
         <div class="modal-card__footer">
-          <button type="button" class="app-btn app-btn-link" @click="pending = null">Cancel</button>
+          <button type="button" class="app-btn app-btn-link" @click="pending = null">{% translate "Cancel" %}</button>
           <form
             method="post"
             :action="pending === 'reboot' ? '{% url 'anthias_app:settings_reboot' %}' : '{% url 'anthias_app:settings_shutdown' %}'"
             class="inline m-0"
           >
             {% csrf_token %}
-            <button type="submit" class="app-btn app-btn-danger" x-text="pending === 'reboot' ? 'Reboot now' : 'Shut down'"></button>
+            <button type="submit" class="app-btn app-btn-danger" x-text="pending === 'reboot' ? '{{ label_reboot_now|escapejs }}' : '{{ label_shutdown_now|escapejs }}'"></button>
           </form>
         </div>
       </div>
@@ -278,24 +292,22 @@
   <section class="settings-section mt-4">
     <header>
       <div>
-        <h2>Display power <span class="settings-section__badge" aria-label="Experimental feature">Experimental</span></h2>
+        <h2>{% translate "Display power" %} <span class="settings-section__badge" aria-label="{% translate 'Experimental feature' %}">{% translate "Experimental" %}</span></h2>
         <p class="settings-section__lede">
-          Toggle the connected display over HDMI-CEC. Works only on
-          CEC-capable hardware (most x86 PCs are not). The outcome
-          will appear as a toast.
+          {% translate "Toggle the connected display over HDMI-CEC. Works only on CEC-capable hardware (most x86 PCs are not). The outcome will appear as a toast." %}
         </p>
       </div>
       <div class="settings-section__actions">
         <form method="post" action="{% url 'anthias_app:settings_display_power' state='on' %}" class="inline m-0">
           {% csrf_token %}
           <button type="submit" class="app-btn app-btn-outline-dark">
-            <i class="ti ti-bulb"></i><span>Turn display on</span>
+            <i class="ti ti-bulb"></i><span>{% translate "Turn display on" %}</span>
           </button>
         </form>
         <form method="post" action="{% url 'anthias_app:settings_display_power' state='off' %}" class="inline m-0">
           {% csrf_token %}
           <button type="submit" class="app-btn app-btn-outline-dark">
-            <i class="ti ti-bulb-off"></i><span>Turn display off</span>
+            <i class="ti ti-bulb-off"></i><span>{% translate "Turn display off" %}</span>
           </button>
         </form>
       </div>

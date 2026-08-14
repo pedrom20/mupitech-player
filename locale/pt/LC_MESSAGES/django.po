@@ -465,3 +465,368 @@ msgstr "Abrir em novo separador"
 
 msgid "Done"
 msgstr "Concluído"
+
+# --- integrations.html ---
+msgid "External platforms managing this player."
+msgstr "Plataformas externas que gerem este dispositivo."
+
+msgid "Balena"
+msgstr "Balena"
+
+msgid "Field"
+msgstr "Campo"
+
+msgid "Value"
+msgstr "Valor"
+
+msgid "Description"
+msgstr "Descrição"
+
+msgid "Device name"
+msgstr "Nome do dispositivo"
+
+msgid "The name of the device on first initialisation."
+msgstr "O nome do dispositivo na primeira inicialização."
+
+msgid "Device UUID"
+msgstr "UUID do dispositivo"
+
+msgid "Unique identifier used by Balena to identify this device."
+msgstr "Identificador único usado pela Balena para identificar este dispositivo."
+
+msgid "App ID"
+msgstr "ID da app"
+
+msgid "ID number of the Balena application this device belongs to."
+msgstr "Número de ID da aplicação Balena a que este dispositivo pertence."
+
+msgid "App name"
+msgstr "Nome da app"
+
+msgid "Name of the Balena application this device belongs to."
+msgstr "Nome da aplicação Balena a que este dispositivo pertence."
+
+msgid "Supervisor version"
+msgstr "Versão do supervisor"
+
+msgid "Current version of the supervisor agent on the device."
+msgstr "Versão atual do agente supervisor no dispositivo."
+
+msgid "Host OS version"
+msgstr "Versão do SO anfitrião"
+
+msgid "Version of the host OS."
+msgstr "Versão do sistema operativo anfitrião."
+
+msgid "No integrations connected"
+msgstr "Sem integrações ligadas"
+
+msgid "This player isn't currently managed by an external platform. Integrations like Balena will appear here when configured."
+msgstr "Este dispositivo não é atualmente gerido por uma plataforma externa. Integrações como a Balena aparecerão aqui quando configuradas."
+
+# --- system_info.html ---
+msgid "System Info"
+msgstr "Informação do sistema"
+
+msgid "Live diagnostics for this player. Refresh the page to update."
+msgstr "Diagnóstico ao vivo deste dispositivo. Atualize a página para renovar."
+
+msgid "Live diagnostics"
+msgstr "Diagnóstico ao vivo"
+
+msgid "CPU load, memory and storage updated each refresh."
+msgstr "Carga de CPU, memória e armazenamento atualizados a cada refresh."
+
+msgid "Load Average"
+msgstr "Carga média"
+
+msgid "Trending up"
+msgstr "A subir"
+
+msgid "Cooling off"
+msgstr "A estabilizar"
+
+msgid "Steady"
+msgstr "Estável"
+
+msgid "%(counter)s CPU · saturation at %(counter)s.0"
+msgid_plural "%(counter)s CPUs · saturation at %(counter)s.0"
+msgstr[0] "%(counter)s CPU · saturação em %(counter)s.0"
+msgstr[1] "%(counter)s CPUs · saturação em %(counter)s.0"
+
+msgid "Memory"
+msgstr "Memória"
+
+msgid "Memory: %(used)s MiB used, %(cache)s MiB cache, %(free)s MiB free of %(total)s MiB total"
+msgstr "Memória: %(used)s MiB usados, %(cache)s MiB de cache, %(free)s MiB livres de %(total)s MiB totais"
+
+msgid "MiB total"
+msgstr "MiB totais"
+
+msgid "Used"
+msgstr "Usados"
+
+msgid "Buffers / cache"
+msgstr "Buffers / cache"
+
+msgid "Free"
+msgstr "Livres"
+
+msgid "Available"
+msgstr "Disponíveis"
+
+msgid "Low-RAM mode:"
+msgstr "Modo de RAM baixa:"
+
+msgid "Chromium low-memory profile for web pages, 1080p upload cap on video. Engages below %(threshold)s MiB MemTotal."
+msgstr "Perfil de baixa memória do Chromium para páginas web, limite de upload de vídeo em 1080p. Ativa-se abaixo de %(threshold)s MiB de MemTotal."
+
+msgid "Uptime"
+msgstr "Tempo em funcionamento"
+
+msgid "Device time"
+msgstr "Hora do dispositivo"
+
+msgid "Disk"
+msgstr "Disco"
+
+msgid "Disk: %(used)s used of %(total)s total (%(pct)s%%)"
+msgstr "Disco: %(used)s usados de %(total)s totais (%(pct)s%%)"
+
+msgid "total"
+msgstr "total"
+
+msgid "Display &amp; hardware"
+msgstr "Ecrã e hardware"
+
+msgid "What this player is rendering to and what it's running on."
+msgstr "Onde este dispositivo está a renderizar e em que hardware corre."
+
+msgid "Device model"
+msgstr "Modelo do dispositivo"
+
+msgid "Resolution"
+msgstr "Resolução"
+
+msgid "Reported by viewer"
+msgstr "Reportado pelo viewer"
+
+msgid "Configured (no viewer report yet)"
+msgstr "Configurado (ainda sem relatório do viewer)"
+
+msgid "Display Power (CEC)"
+msgstr "Alimentação do ecrã (CEC)"
+
+msgid "None"
+msgstr "Nenhum"
+
+msgid "Identity"
+msgstr "Identidade"
+
+msgid "MupiTech build and host network identifiers."
+msgstr "Compilação MupiTech e identificadores de rede do anfitrião."
+
+msgid "MupiTech version"
+msgstr "Versão do MupiTech"
+
+msgid "This device is behind the tip of mupitech-custom"
+msgstr "Este dispositivo está atrasado em relação ao topo de mupitech-custom"
+
+msgid "Update available"
+msgstr "Atualização disponível"
+
+msgid "MAC address"
+msgstr "Endereço MAC"
+
+# --- settings.html ---
+msgid "Configure how this player behaves and what it should display."
+msgstr "Configure o comportamento deste dispositivo e o que deve mostrar."
+
+msgid "Player identity"
+msgstr "Identidade do dispositivo"
+
+msgid "A friendly name shown in this UI and in the page title."
+msgstr "Um nome simples mostrado nesta interface e no título da página."
+
+msgid "Player name"
+msgstr "Nome do dispositivo"
+
+msgid "Display &amp; playback"
+msgstr "Ecrã e reprodução"
+
+msgid "Defaults, audio, timezone, and display."
+msgstr "Predefinições, áudio, fuso horário e ecrã."
+
+msgid "Default duration (seconds)"
+msgstr "Duração predefinida (segundos)"
+
+msgid "Default streaming duration (seconds)"
+msgstr "Duração predefinida de streaming (segundos)"
+
+msgid "HDMI"
+msgstr "HDMI"
+
+msgid "3.5mm jack"
+msgstr "Jack de 3,5 mm"
+
+msgid "Audio output"
+msgstr "Saída de áudio"
+
+msgid "Date format"
+msgstr "Formato de data"
+
+msgid "Timezone"
+msgstr "Fuso horário"
+
+msgid "Landscape (0°)"
+msgstr "Paisagem (0°)"
+
+msgid "Portrait (90°)"
+msgstr "Retrato (90°)"
+
+msgid "Landscape, inverted (180°)"
+msgstr "Paisagem, invertida (180°)"
+
+msgid "Portrait, inverted (270°)"
+msgstr "Retrato, invertido (270°)"
+
+msgid "Screen rotation"
+msgstr "Rotação do ecrã"
+
+msgid "Show splash screen"
+msgstr "Mostrar ecrã de arranque"
+
+msgid "Display the device's IP address on screen at boot."
+msgstr "Mostrar o endereço IP do dispositivo no ecrã ao arrancar."
+
+msgid "Include default sample assets"
+msgstr "Incluir conteúdos de exemplo predefinidos"
+
+msgid "Auto-add the bundled sample assets to a fresh playlist."
+msgstr "Adicionar automaticamente os conteúdos de exemplo a uma playlist nova."
+
+msgid "Shuffle playlist"
+msgstr "Baralhar playlist"
+
+msgid "Randomise the play order on every loop."
+msgstr "Randomizar a ordem de reprodução em cada ciclo."
+
+msgid "Prefer dark mode"
+msgstr "Preferir modo escuro"
+
+msgid "Ask web page assets to render in dark mode where they support it."
+msgstr "Pedir a páginas web para renderizar em modo escuro quando suportado."
+
+msgid "Use 24-hour clock"
+msgstr "Usar relógio de 24 horas"
+
+msgid "Display times in 24-hour format across the UI."
+msgstr "Mostrar as horas em formato de 24 horas em toda a interface."
+
+msgid "Debug logging"
+msgstr "Registo de depuração"
+
+msgid "Verbose viewer logs. Leave off unless you're chasing a problem."
+msgstr "Registos detalhados do viewer. Deixe desligado a menos que esteja a investigar um problema."
+
+msgid "Verify SSL certificates"
+msgstr "Verificar certificados SSL"
+
+msgid "Keep on. Turn off only to allow media or web pages served over HTTPS with a self-signed or untrusted certificate (e.g. an intranet host). Disables certificate checks device-wide."
+msgstr "Mantenha ligado. Desligue apenas para permitir conteúdos ou páginas web servidos por HTTPS com certificado autoassinado ou não confiável (ex.: um servidor de intranet). Desativa a verificação de certificados em todo o dispositivo."
+
+msgid "Authentication"
+msgstr "Autenticação"
+
+msgid "Restrict access to this management UI. Leave disabled on a trusted LAN."
+msgstr "Restrinja o acesso a esta interface de gestão. Deixe desativado numa rede local de confiança."
+
+msgid "Disabled"
+msgstr "Desativado"
+
+msgid "Basic auth"
+msgstr "Autenticação básica"
+
+msgid "Method"
+msgstr "Método"
+
+msgid "Current password"
+msgstr "Palavra-passe atual"
+
+msgid "New password"
+msgstr "Nova palavra-passe"
+
+msgid "Confirm new password"
+msgstr "Confirmar nova palavra-passe"
+
+msgid "Save settings"
+msgstr "Guardar definições"
+
+msgid "Import content"
+msgstr "Importar conteúdo"
+
+msgid "Bring media in from another digital signage platform."
+msgstr "Traga conteúdos de outra plataforma de digital signage."
+
+msgid "Import from %(provider_label)s"
+msgstr "Importar de %(provider_label)s"
+
+msgid "Backup &amp; restore"
+msgstr "Cópia de segurança e restauro"
+
+msgid "Download a tarball of your settings and asset metadata, or recover from one."
+msgstr "Descarregue um pacote com as suas definições e metadados de conteúdos, ou recupere a partir de um."
+
+msgid "Get backup"
+msgstr "Obter cópia de segurança"
+
+msgid "Upload &amp; recover"
+msgstr "Enviar e recuperar"
+
+msgid "System controls"
+msgstr "Controlos do sistema"
+
+msgid "Reboot or power down the device. Both prompt for confirmation."
+msgstr "Reinicie ou desligue o dispositivo. Ambos pedem confirmação."
+
+msgid "Reboot"
+msgstr "Reiniciar"
+
+msgid "Shutdown"
+msgstr "Desligar"
+
+msgid "Reboot device?"
+msgstr "Reiniciar o dispositivo?"
+
+msgid "Shut down device?"
+msgstr "Desligar o dispositivo?"
+
+msgid "The device will reboot now. The screen will go dark for about a minute."
+msgstr "O dispositivo vai reiniciar agora. O ecrã vai ficar escuro durante cerca de um minuto."
+
+msgid "The device will power off now. You may need to unplug and replug to bring it back up."
+msgstr "O dispositivo vai desligar-se agora. Pode ser necessário desligar e voltar a ligar a corrente para o reativar."
+
+msgid "Reboot now"
+msgstr "Reiniciar agora"
+
+msgid "Shut down"
+msgstr "Desligar"
+
+msgid "Display power"
+msgstr "Alimentação do ecrã"
+
+msgid "Experimental feature"
+msgstr "Funcionalidade experimental"
+
+msgid "Experimental"
+msgstr "Experimental"
+
+msgid "Toggle the connected display over HDMI-CEC. Works only on CEC-capable hardware (most x86 PCs are not). The outcome will appear as a toast."
+msgstr "Ligue ou desligue o ecrã ligado via HDMI-CEC. Só funciona em hardware compatível com CEC (a maioria dos PCs x86 não é). O resultado aparece como uma notificação."
+
+msgid "Turn display on"
+msgstr "Ligar ecrã"
+
+msgid "Turn display off"
+msgstr "Desligar ecrã"

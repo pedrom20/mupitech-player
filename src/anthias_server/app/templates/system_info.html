@@ -1,25 +1,26 @@
 {% extends "_layout.html" %}
 {% load humanize %}
+{% load i18n %}
 
-{% block title %}{% if player_name %}{{ player_name }} · {% endif %}System Info{% endblock %}
+{% block title %}{% if player_name %}{{ player_name }} · {% endif %}{% translate "System Info" %}{% endblock %}
 
 {% block main %}
 <div class="app-container">
   <div class="page-header-bar">
     <div class="page-header-bar__title">
-      <h1 class="page-header">System Info</h1>
-      <p class="page-header-bar__lede">Live diagnostics for this player. Refresh the page to update.</p>
+      <h1 class="page-header">{% translate "System Info" %}</h1>
+      <p class="page-header-bar__lede">{% translate "Live diagnostics for this player. Refresh the page to update." %}</p>
     </div>
   </div>
 
   <section class="info-section">
     <header class="info-section__header">
-      <h2><i class="ti ti-activity mr-2"></i>Live diagnostics</h2>
-      <p class="info-section__lede">CPU load, memory and storage updated each refresh.</p>
+      <h2><i class="ti ti-activity mr-2"></i>{% translate "Live diagnostics" %}</h2>
+      <p class="info-section__lede">{% translate "CPU load, memory and storage updated each refresh." %}</p>
     </header>
     <div class="stat-grid">
       <div class="stat-card stat-card--span-2">
-        <p class="stat-card__label">Load Average</p>
+        <p class="stat-card__label">{% translate "Load Average" %}</p>
         <div class="loadavg-card">
           <div class="loadavg-rows">
             {% for window, label in load.windows %}
@@ -34,47 +35,48 @@
             <i class="ti {% if load.trend == 'up' %}ti-trending-up{% elif load.trend == 'down' %}ti-trending-down{% else %}ti-minus-circle{% endif %}"></i>
             <div>
               <p class="loadavg-trend__primary">
-                {% if load.trend == 'up' %}Trending up{% elif load.trend == 'down' %}Cooling off{% else %}Steady{% endif %}
+                {% if load.trend == 'up' %}{% translate "Trending up" %}{% elif load.trend == 'down' %}{% translate "Cooling off" %}{% else %}{% translate "Steady" %}{% endif %}
               </p>
-              <p class="loadavg-trend__secondary">{{ load.cpu_count }} CPU{{ load.cpu_count|pluralize }} · saturation at {{ load.cpu_count }}.0</p>
+              <p class="loadavg-trend__secondary">{% blocktranslate count counter=load.cpu_count %}{{ counter }} CPU · saturation at {{ counter }}.0{% plural %}{{ counter }} CPUs · saturation at {{ counter }}.0{% endblocktranslate %}</p>
             </div>
           </div>
         </div>
       </div>
 
       <div class="stat-card stat-card--span-2">
-        <p class="stat-card__label">Memory</p>
+        <p class="stat-card__label">{% translate "Memory" %}</p>
+        {% blocktranslate asvar memory_pie_title with used=memory.used|intcomma cache=memory.cache|intcomma free=memory.free|intcomma total=memory.total|intcomma %}Memory: {{ used }} MiB used, {{ cache }} MiB cache, {{ free }} MiB free of {{ total }} MiB total{% endblocktranslate %}
         <div class="resource-card">
           <div
             class="resource-pie resource-pie--memory"
             style="--slice-1: {{ memory.used_pct }}; --slice-2: {{ memory.cache_pct }}"
-           
-            title="Memory: {{ memory.used|intcomma }} MiB used, {{ memory.cache|intcomma }} MiB cache, {{ memory.free|intcomma }} MiB free of {{ memory.total|intcomma }} MiB total"
+
+            title="{{ memory_pie_title }}"
           >
             <div class="resource-pie__inner">
               <div class="resource-pie__total">{{ memory.total|intcomma }}</div>
-              <div class="resource-pie__unit">MiB total</div>
+              <div class="resource-pie__unit">{% translate "MiB total" %}</div>
             </div>
           </div>
           <ul class="resource-legend">
             <li class="resource-legend__row resource-legend__row--slice-1">
               <span class="resource-legend__swatch" aria-hidden="true"></span>
-              <span class="resource-legend__name">Used</span>
+              <span class="resource-legend__name">{% translate "Used" %}</span>
               <span class="resource-legend__value">{{ memory.used|intcomma }} MiB · {{ memory.used_pct }}%</span>
             </li>
             <li class="resource-legend__row resource-legend__row--slice-2">
               <span class="resource-legend__swatch" aria-hidden="true"></span>
-              <span class="resource-legend__name">Buffers / cache</span>
+              <span class="resource-legend__name">{% translate "Buffers / cache" %}</span>
               <span class="resource-legend__value">{{ memory.cache|intcomma }} MiB · {{ memory.cache_pct }}%</span>
             </li>
             <li class="resource-legend__row resource-legend__row--slice-3">
               <span class="resource-legend__swatch" aria-hidden="true"></span>
-              <span class="resource-legend__name">Free</span>
+              <span class="resource-legend__name">{% translate "Free" %}</span>
               <span class="resource-legend__value">{{ memory.free|intcomma }} MiB · {{ memory.free_pct }}%</span>
             </li>
             <li class="resource-legend__row resource-legend__row--ghost">
               <span class="resource-legend__swatch" aria-hidden="true"></span>
-              <span class="resource-legend__name">Available</span>
+              <span class="resource-legend__name">{% translate "Available" %}</span>
               <span class="resource-legend__value">{{ memory.available|intcomma }} MiB</span>
             </li>
           </ul>
@@ -82,9 +84,8 @@
         {% if low_ram.active %}
         <p class="stat-card__meta stat-card__meta--warn">
           <i class="ti ti-alert-triangle mr-1"></i>
-          <strong>Low-RAM mode:</strong> Chromium low-memory profile
-          for web pages, 1080p upload cap on video. Engages
-          below {{ low_ram.threshold_mib|intcomma }} MiB MemTotal.
+          <strong>{% translate "Low-RAM mode:" %}</strong>
+          {% blocktranslate with threshold=low_ram.threshold_mib|intcomma %}Chromium low-memory profile for web pages, 1080p upload cap on video. Engages below {{ threshold }} MiB MemTotal.{% endblocktranslate %}
         </p>
         {% endif %}
       </div>
@@ -96,12 +97,12 @@
       height and leaving a dead vertical band.
       {% endcomment %}
       <div class="stat-card stat-card--span-2">
-        <p class="stat-card__label">Uptime</p>
+        <p class="stat-card__label">{% translate "Uptime" %}</p>
         <div class="stat-card__value">{{ uptime.human }}</div>
       </div>
 
       <div class="stat-card stat-card--span-2">
-        <p class="stat-card__label">Device time</p>
+        <p class="stat-card__label">{% translate "Device time" %}</p>
         {% comment %}
         Ticks client-side but is seeded from the server instant in
         data-iso — never the browser clock — so a wrong device clock is
@@ -116,28 +117,29 @@
       </div>
 
       <div class="stat-card stat-card--span-2">
-        <p class="stat-card__label">Disk</p>
+        <p class="stat-card__label">{% translate "Disk" %}</p>
+        {% blocktranslate asvar disk_pie_title with used=disk.used_human total=disk.total_human pct=disk.used_pct %}Disk: {{ used }} used of {{ total }} total ({{ pct }}%){% endblocktranslate %}
         <div class="resource-card">
           <div
             class="resource-pie resource-pie--disk"
             style="--slice-1: {{ disk.used_pct }}; --slice-2: 0"
-           
-            title="Disk: {{ disk.used_human }} used of {{ disk.total_human }} total ({{ disk.used_pct }}%)"
+
+            title="{{ disk_pie_title }}"
           >
             <div class="resource-pie__inner">
               <div class="resource-pie__total">{{ disk.total_human }}</div>
-              <div class="resource-pie__unit">total</div>
+              <div class="resource-pie__unit">{% translate "total" %}</div>
             </div>
           </div>
           <ul class="resource-legend">
             <li class="resource-legend__row resource-legend__row--slice-1">
               <span class="resource-legend__swatch" aria-hidden="true"></span>
-              <span class="resource-legend__name">Used</span>
+              <span class="resource-legend__name">{% translate "Used" %}</span>
               <span class="resource-legend__value">{{ disk.used_human }} · {{ disk.used_pct }}%</span>
             </li>
             <li class="resource-legend__row resource-legend__row--slice-3">
               <span class="resource-legend__swatch" aria-hidden="true"></span>
-              <span class="resource-legend__name">Free</span>
+              <span class="resource-legend__name">{% translate "Free" %}</span>
               <span class="resource-legend__value">{{ disk.free_human }} · {{ disk.free_pct }}%</span>
             </li>
           </ul>
@@ -148,35 +150,37 @@
 
   <section class="info-section">
     <header class="info-section__header">
-      <h2><i class="ti ti-device-desktop mr-2"></i>Display &amp; hardware</h2>
-      <p class="info-section__lede">What this player is rendering to and what it's running on.</p>
+      <h2><i class="ti ti-device-desktop mr-2"></i>{% translate "Display &amp; hardware" %}</h2>
+      <p class="info-section__lede">{% translate "What this player is rendering to and what it's running on." %}</p>
     </header>
     <div class="stat-grid">
       <div class="stat-card stat-card--span-2">
-        <p class="stat-card__label">Device model</p>
+        <p class="stat-card__label">{% translate "Device model" %}</p>
         <div class="stat-card__value">{{ device_model }}</div>
         {% if device_model_detail %}<div class="stat-card__meta">{{ device_model_detail }}</div>{% endif %}
       </div>
       <div class="stat-card">
-        <p class="stat-card__label">Resolution</p>
+        <p class="stat-card__label">{% translate "Resolution" %}</p>
         <div class="stat-card__value">{{ resolution.value }}</div>
         <div class="stat-card__meta">
-          {% if resolution.source == 'live' %}<i class="ti ti-broadcast mr-1"></i>Reported by viewer
-          {% else %}<i class="ti ti-settings mr-1"></i>Configured (no viewer report yet){% endif %}
+          {% if resolution.source == 'live' %}<i class="ti ti-broadcast mr-1"></i>{% translate "Reported by viewer" %}
+          {% else %}<i class="ti ti-settings mr-1"></i>{% translate "Configured (no viewer report yet)" %}{% endif %}
         </div>
       </div>
-      {% include "_stat_card.html" with label="Display Power (CEC)" value=display_power|default:"None" %}
+      {% translate "Display Power (CEC)" as label_display_power %}
+      {% translate "None" as label_none %}
+      {% include "_stat_card.html" with label=label_display_power value=display_power|default:label_none %}
     </div>
   </section>
 
   <section class="info-section">
     <header class="info-section__header">
-      <h2><i class="ti ti-fingerprint mr-2"></i>Identity</h2>
-      <p class="info-section__lede">MupiTech build and host network identifiers.</p>
+      <h2><i class="ti ti-fingerprint mr-2"></i>{% translate "Identity" %}</h2>
+      <p class="info-section__lede">{% translate "MupiTech build and host network identifiers." %}</p>
     </header>
     <div class="stat-grid">
       <div class="stat-card stat-card--span-2">
-        <p class="stat-card__label">MupiTech version</p>
+        <p class="stat-card__label">{% translate "MupiTech version" %}</p>
         <div class="stat-card__value stat-card__value--mono version-line">
           <span class="version-line__head">
             {% if anthias_version_master_link %}
@@ -187,14 +191,14 @@
           <span class="version-line__meta">{{ anthias_version_meta }}</span>
           {% endif %}
           {% if not up_to_date and not is_balena %}
-          <a class="update-pill" href="https://github.com/pedrom20/mupitech-player/commits/mupitech-custom" rel="noopener noreferrer" target="_blank" title="This device is behind the tip of mupitech-custom">
-            <i class="ti ti-cloud-download"></i><span>Update available</span>
+          <a class="update-pill" href="https://github.com/pedrom20/mupitech-player/commits/mupitech-custom" rel="noopener noreferrer" target="_blank" title="{% translate 'This device is behind the tip of mupitech-custom' %}">
+            <i class="ti ti-cloud-download"></i><span>{% translate "Update available" %}</span>
           </a>
           {% endif %}
         </div>
       </div>
       <div class="stat-card stat-card--span-2">
-        <p class="stat-card__label">MAC address</p>
+        <p class="stat-card__label">{% translate "MAC address" %}</p>
         <div class="stat-card__value stat-card__value--mono">{{ mac_address }}</div>
       </div>
     </div>
