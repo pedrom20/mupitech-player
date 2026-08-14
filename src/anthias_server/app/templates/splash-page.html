@@ -1,7 +1,7 @@
 {# vim: ft=htmldjango #}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     {% load static %}
     <meta charset="utf-8"/>
@@ -12,7 +12,7 @@
       viewport and shrink the IP pills + QR.
     {% endcomment %}
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Welcome to Anthias</title>
+    <title>Bem-vindo ao MupiTech</title>
     {% comment %}
       This page uses no Tailwind utility classes — every selector
       (.splash-*, .auth-*) lives in anthias.css. Skip the Tailwind
@@ -27,17 +27,17 @@
 <main class="splash-shell">
   <div class="splash-card">
     <div class="splash-card__brand">
-      <img src="{{ splash_logo_url }}" alt="Anthias" class="splash-logo"/>
+      <img src="{{ splash_logo_url }}" alt="MupiTech" class="splash-logo"/>
     </div>
 
     <div class="splash-card__body">
       <p id="splash-status-detecting" class="splash-status">
         <span class="splash-status__dot splash-status__dot--pulse" aria-hidden="true"></span>
-        <span>Detecting network&hellip;</span>
+        <span>A detetar rede&hellip;</span>
       </p>
       <p id="splash-status-ready" class="splash-status" hidden>
         <span class="splash-status__dot splash-status__dot--ok" aria-hidden="true"></span>
-        <span>Ready to manage</span>
+        <span>Pronto a gerir</span>
       </p>
 
       {% comment %}
@@ -48,8 +48,8 @@
         least one IP arrives.
       {% endcomment %}
       <div id="splash-prompt" hidden>
-        <h1 class="splash-headline">Open this on your phone or laptop</h1>
-        <p class="splash-subhead">Point a browser at one of the addresses below, or scan the QR code.</p>
+        <h1 class="splash-headline">Abra isto no seu telemóvel ou computador</h1>
+        <p class="splash-subhead">Aceda a um dos endereços abaixo no navegador, ou leia o código&nbsp;QR.</p>
       </div>
 
       <div id="splash-ip-list" class="splash-ip-list" aria-live="polite"></div>
@@ -57,14 +57,78 @@
 
     <aside id="splash-qr-card" class="splash-card__qr" hidden>
       <div id="splash-qr" class="splash-qr"></div>
-      <p class="splash-qr__caption">Scan to manage</p>
+      <p class="splash-qr__caption">Ler para gerir</p>
     </aside>
   </div>
 </main>
+
+{% comment %}
+  Per-device identification chip (location / group / device name), e.g.
+  "Biblioteca / Receção / Balcão 1" — useful when several devices are
+  laid out side by side. Deliberately NOT server-rendered from Django
+  template context: this page is baked into the image at build time and
+  served identically to every device, so there's no per-player data
+  available here. Instead it's read at runtime from a small JSON file
+  the Fleet Manager writes directly onto the host (bind-mounted into the
+  container, see docker-compose-player-*.yml) — a host file survives a
+  container recreate (image update, Watchtower auto-update) since it
+  isn't part of the container's own writable layer, unlike patching this
+  page's HTML directly would be. Silently stays hidden if the file is
+  missing (device not yet linked to a location/group) or unreachable.
+{% endcomment %}
+<div id="mupitech-device-label" class="mupitech-device-label" hidden></div>
+
 <script>
   // The splash bundle reverses the API URL via Django so the JS layer
   // doesn't hard-code the version prefix.
   globalThis.__splashIpsUrl = '{% url "api:network_ip_addresses_v2" %}';
+</script>
+<script>
+  (function () {
+    var ICONS = {
+      location: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        + 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        + '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+      group: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        + 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        + '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'
+        + '<path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+      device: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        + 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        + '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+    };
+
+    fetch('/static/mupitech-device-label.json', { cache: 'no-store' })
+      .then(function (response) { return response.ok ? response.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        var parts = [];
+        if (data.location) parts.push(['location', data.location]);
+        if (data.group) parts.push(['group', data.group]);
+        if (data.name) parts.push(['device', data.name]);
+        if (!parts.length) return;
+
+        var el = document.getElementById('mupitech-device-label');
+        parts.forEach(function (part, index) {
+          if (index > 0) {
+            var sep = document.createElement('span');
+            sep.className = 'mupitech-device-label__sep';
+            sep.setAttribute('aria-hidden', 'true');
+            sep.textContent = '/';
+            el.appendChild(sep);
+          }
+          var item = document.createElement('span');
+          item.className = 'mupitech-device-label__item';
+          item.innerHTML = ICONS[part[0]];
+          var label = document.createElement('span');
+          label.textContent = part[1];
+          item.appendChild(label);
+          el.appendChild(item);
+        });
+        el.hidden = false;
+      })
+      .catch(function () {});
+  })();
 </script>
 </body>
 </html>

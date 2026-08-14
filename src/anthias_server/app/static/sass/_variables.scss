@@ -1,8 +1,16 @@
-$anthias-purple-1: #270035;
-$anthias-purple-2: #492955;
-$anthias-purple-3: #52335D;
-$anthias-purple-4: #D4CCD7;
-$anthias-purple-5: #8819C7;
+// MupiTech blue palette — replaces upstream Anthias's purple brand tokens
+// (kept the same variable names/roles so every #{$anthias-purple-N}
+// reference throughout this stylesheet repaints automatically; only the
+// values changed). Matches the mapping the Fleet Manager used to apply
+// at runtime via SSH (players/branding.py's THEME_COLOR_REPLACEMENTS in
+// the mupiteck repo) — baked in here now so it survives a container
+// recreate instead of living only in a running container's writable
+// layer.
+$anthias-purple-1: #04182B;
+$anthias-purple-2: #0C3A5C;
+$anthias-purple-3: #005096;
+$anthias-purple-4: #CFE3F0;
+$anthias-purple-5: #0082C8;
 $anthias-yellow-1: #FFF963;
 $anthias-yellow-2: #FFD800;
 $anthias-yellow-3: #FFE11A;

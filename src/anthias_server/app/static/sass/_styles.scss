@@ -47,13 +47,13 @@
   // Colour roles. Backgrounds, surfaces, text — referenced by name through
   // the rest of the file so tweaks happen in one place.
   --color-bg: #{$anthias-purple-1};
-  --color-bg-deep: #0f0019;          // splash / extreme dark
+  --color-bg-deep: #04182B;          // splash / extreme dark — MupiTech blue
   --color-bg-elevated: #{$anthias-purple-3};
   --color-surface: #ffffff;
   --color-surface-soft: #fafafa;
   --color-surface-tint: #f4f1f6;
   --color-active: #{$anthias-purple-2};
-  --color-active-tint: #503061;      // gradient stop above $anthias-purple-2
+  --color-active-tint: #0d3f66;      // gradient stop above $anthias-purple-2 — MupiTech blue
   --color-text: #1f002a;
   --color-text-muted: #5e5868;
   --color-text-on-dark: #ffffff;
@@ -1903,8 +1903,8 @@ $footer-height: 13rem;
   color: var(--color-text-on-dark);
   background-color: var(--color-bg-deep);
   background-image:
-    radial-gradient(at 20% 10%, rgba(124, 48, 205, 0.45), transparent 55%),
-    radial-gradient(at 85% 90%, rgba(91, 32, 144, 0.4), transparent 55%),
+    radial-gradient(at 20% 10%, rgba(0, 130, 200, 0.45), transparent 55%),
+    radial-gradient(at 85% 90%, rgba(12, 58, 92, 0.4), transparent 55%),
     linear-gradient(160deg, #{$anthias-purple-1} 0%, var(--color-bg-deep) 100%);
 }
 
@@ -1956,7 +1956,7 @@ $footer-height: 13rem;
 }
 
 .splash-logo {
-  height: clamp(3rem, 7vh, 5.5rem);
+  height: clamp(4.5rem, 9vh, 7.5rem);
   width: auto;
   max-width: 100%;
 }
@@ -2074,6 +2074,41 @@ $footer-height: 13rem;
   color: var(--color-text);
 }
 
+// Per-device identification chip ("Localização / Grupo / Nome"), fixed to
+// the screen's bottom-right corner — deliberately outside .splash-card
+// so it never shares a line/baseline with .splash-status. Hidden by
+// default; splash-page.html's inline script only reveals it once (if)
+// its backing JSON file resolves to actual data. Visually matches
+// .splash-status (same tokens) so it reads as part of the same design
+// system.
+.mupitech-device-label {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-text-on-dark-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-pill);
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__sep {
+    opacity: 0.4;
+  }
+}
+
 // -----------------------------------------------------------------------------
 // 17a. Login / pre-auth — same gradient background as the splash so the
 //      pre-dashboard surface feels like one product, then a light card
@@ -2100,8 +2135,8 @@ body.auth-body {
   color: var(--color-text);
   background-color: var(--color-bg-deep);
   background-image:
-    radial-gradient(at 20% 10%, rgba(124, 48, 205, 0.45), transparent 55%),
-    radial-gradient(at 85% 90%, rgba(91, 32, 144, 0.4), transparent 55%),
+    radial-gradient(at 20% 10%, rgba(0, 130, 200, 0.45), transparent 55%),
+    radial-gradient(at 85% 90%, rgba(12, 58, 92, 0.4), transparent 55%),
     linear-gradient(160deg, #{$anthias-purple-1} 0%, var(--color-bg-deep) 100%);
 }
 
