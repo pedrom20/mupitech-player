@@ -363,7 +363,7 @@ function importContent() {
 
         if (status >= 500) {
           this.tokenError = payload.error
-            || 'Anthias couldn\'t reach {{ provider.label|escapejs }}. Check the device\'s internet connection and try again.'
+            || 'MupiTech couldn\'t reach {{ provider.label|escapejs }}. Check the device\'s internet connection and try again.'
           return
         }
         if (status === 400) {
@@ -376,7 +376,7 @@ function importContent() {
         }
         if (!ok) {
           this.tokenError = payload.error
-            || `Anthias returned HTTP ${status} from the validate endpoint.`
+            || `MupiTech returned HTTP ${status} from the validate endpoint.`
           return
         }
         if (!payload.valid) {
