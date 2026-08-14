@@ -1,10 +1,10 @@
 {% extends "_error.html" %}
 {% load i18n %}
-{# Django renders 500.html without RequestContext — keep self-contained.
+{% comment %} Django renders 500.html without RequestContext — keep self-contained.
    {% translate %} still works (translation activation is a thread-local
    set by LocaleMiddleware during request processing, not something the
    template context carries), only {{ LANGUAGE_CODE }} in _error.html's
-   <html lang="..."> falls back to empty on this one page. #}
+   <html lang="..."> falls back to empty on this one page. {% endcomment %}
 
 {% block title %}{% translate "Server error — MupiTech" %}{% endblock %}
 {% block error_icon %}ti-bug{% endblock %}
