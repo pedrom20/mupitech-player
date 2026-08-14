@@ -79,6 +79,20 @@
 {% endcomment %}
 <div id="mupitech-device-label" class="mupitech-device-label" hidden></div>
 
+{% comment %}
+  Once a partner logo takes over the main brand slot above, MupiTech's
+  own mark would otherwise vanish from the device entirely — keep a
+  small monochrome credit in the free corner instead (device-label
+  already owns bottom-right). custom_nav_logo_url is merged in by
+  helpers.template() (see page_context.py::navbar()) — same signal the
+  local dashboard navbar uses, reused here for free.
+{% endcomment %}
+{% if custom_nav_logo_url %}
+<div class="splash-mono-badge">
+  <img src="{% static 'img/logo-full.svg' %}" alt="MupiTech"/>
+</div>
+{% endif %}
+
 <script>
   // The splash bundle reverses the API URL via Django so the JS layer
   // doesn't hard-code the version prefix.

@@ -2005,7 +2005,13 @@ $footer-height: 13rem;
 
 .splash-headline {
   margin: 0 0 var(--space-2) 0;
-  font-size: clamp(1.5rem, 2.4vw + 1rem, 2.5rem);
+  // .splash-card caps out at 64rem (see above), so past that width the
+  // two-column layout's body column plateaus at a fixed pixel width —
+  // the old clamp topped out at 2.5rem, sized without ever checking it
+  // against that steady-state width, so the (long, PT) headline wrapped
+  // to two lines on every screen wide enough to show the QR side by
+  // side, not just cramped ones. Capped lower so it actually fits.
+  font-size: clamp(1.35rem, 1.6vw + 0.9rem, 1.75rem);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.01em;
@@ -2110,6 +2116,28 @@ $footer-height: 13rem;
 
   &__sep {
     opacity: 0.4;
+  }
+}
+
+// Subtle "powered by MupiTech" credit — only rendered when a partner
+// logo has taken over the main splash-card__brand slot (see
+// splash-page.html's {% if custom_nav_logo_url %}), so MupiTech's own
+// mark doesn't just disappear off a branded device. Bottom-LEFT
+// (mupitech-device-label already owns bottom-right). `invert(1)` after
+// `brightness(0)` turns the full-colour SVG into flat white without
+// needing a hand-maintained monochrome asset — works because the
+// canvas outside the mark's own rounded-rect is transparent.
+.splash-mono-badge {
+  position: fixed;
+  bottom: var(--space-5);
+  left: var(--space-5);
+  z-index: 1000;
+  opacity: 0.55;
+
+  img {
+    height: 22px;
+    width: auto;
+    filter: brightness(0) invert(1);
   }
 }
 
