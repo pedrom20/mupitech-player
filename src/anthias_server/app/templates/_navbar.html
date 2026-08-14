@@ -3,7 +3,11 @@
 <nav class="app-nav fixed top-0 inset-x-0 z-50" x-data="{ open: false }">
   <div class="app-container flex flex-wrap items-center gap-3 py-3">
     <a href="{% url 'anthias_app:home' %}" class="app-nav-brand">
-      <img src="{% static 'img/logo-full.svg' %}" alt="MupiTech">
+      {% if custom_nav_logo_url %}
+        <img src="{{ custom_nav_logo_url }}" alt="MupiTech" class="app-nav-brand--custom">
+      {% else %}
+        <img src="{% static 'img/logo-full.svg' %}" alt="MupiTech">
+      {% endif %}
     </a>
 
     {% get_current_language as CURRENT_LANGUAGE %}

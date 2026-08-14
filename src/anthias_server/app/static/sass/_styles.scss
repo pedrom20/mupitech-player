@@ -1807,7 +1807,11 @@ label { text-align: left; }
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    img { height: 34px; }
+    img { height: 44px; }
+    // A partner-branded logo (pushed via the Fleet Manager, arbitrary
+    // aspect ratio) shouldn't grow wider than the default wordmark's
+    // footprint just because it's a squarer/wider asset.
+    img.app-nav-brand--custom { max-width: 160px; width: auto; }
   }
 
   .app-tab-link {

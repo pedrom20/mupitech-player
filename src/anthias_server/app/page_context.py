@@ -27,17 +27,29 @@ from anthias_common.utils import (
 from anthias_server.lib import diagnostics
 from anthias_server.lib.github import is_up_to_date
 from anthias_server.lib.timezone import format_utc_offset
-from anthias_server.settings import settings
+from anthias_server.settings import DEFAULTS, settings
 
 _redis = connect_to_redis()
+
+_DEFAULT_SPLASH_LOGO_URL = DEFAULTS['main']['splash_logo_url']
 
 
 def navbar() -> dict[str, Any]:
     """Shared by every page; merged into context by helpers.template()."""
+    # Reuses the same custom logo the Fleet Manager already pushes for
+    # the standby/splash screen (players/branding.py on the FM side) —
+    # only surfaced here if it's actually been customized, so an
+    # unbranded device keeps the default nav wordmark rather than the
+    # (differently-shaped) default splash artwork.
+    splash_logo_url = settings['splash_logo_url']
+    custom_nav_logo_url = (
+        splash_logo_url if splash_logo_url != _DEFAULT_SPLASH_LOGO_URL else None
+    )
     return {
         'is_balena': is_balena_app(),
         'up_to_date': is_up_to_date(),
         'player_name': settings['player_name'],
+        'custom_nav_logo_url': custom_nav_logo_url,
     }
 
 
