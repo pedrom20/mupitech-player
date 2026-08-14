@@ -19,6 +19,7 @@
 {% translate "Couldn't load this app's settings. Check your network connection and reopen." as i18n_settings_unreachable %}
 {% translate "Default" as i18n_select_default %}
 {% translate "Drag to set location" as i18n_drag_to_set_location %}
+{% translate "Map unavailable — the app will auto-detect a location." as i18n_map_unavailable %}
 <script>
   window.__i18n = {
     'apps.noStoreConfigured': '{{ i18n_no_store_configured|escapejs }}',
@@ -28,6 +29,7 @@
     'apps.settingsUnreachable': '{{ i18n_settings_unreachable|escapejs }}',
     'apps.selectDefault': '{{ i18n_select_default|escapejs }}',
     'map.dragToSetLocation': '{{ i18n_drag_to_set_location|escapejs }}',
+    'map.unavailable': '{{ i18n_map_unavailable|escapejs }}',
   }
 </script>
 <script src="{% static 'dist/js/home.js' %}" defer></script>

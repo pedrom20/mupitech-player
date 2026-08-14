@@ -34,8 +34,10 @@ export interface LocationMapOptions {
 // location — the app auto-detects by IP.
 function showUnavailable(mount: HTMLElement): void {
   mount.classList.add('app-cfg-map--unavailable')
-  mount.textContent =
-    'Map unavailable — the app will auto-detect a location.'
+  mount.textContent = t(
+    'map.unavailable',
+    'Map unavailable — the app will auto-detect a location.',
+  )
 }
 
 const noop = (): void => {}

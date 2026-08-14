@@ -852,3 +852,6 @@ msgstr "Predefinição"
 
 msgid "Drag to set location"
 msgstr "Arraste para definir a localização"
+
+msgid "Map unavailable — the app will auto-detect a location."
+msgstr "Mapa indisponível — a app vai detetar a localização automaticamente."
