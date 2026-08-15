@@ -2632,6 +2632,78 @@ body.auth-body {
   }
 }
 
+// Mirrors .app-lang-switcher's toggle/menu shape exactly (same
+// reasoning: a light dropdown reads reliably over the page's dark
+// gradient regardless of OS/browser theme) — just a username label
+// and a sign-out button instead of language options.
+.app-user-menu {
+  position: relative;
+
+  &__toggle {
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid var(--scrim-on-dark-15);
+    border-radius: var(--radius-md);
+    padding: 0.3rem 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--color-text-on-dark);
+    font-size: 0.85rem;
+    transition: background var(--t-fast);
+
+    &:hover { background: var(--scrim-4); }
+
+    i { font-size: 1rem; }
+  }
+
+  &__username {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__menu {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    z-index: 1060;
+    min-width: 160px;
+    padding: 0.25rem 0;
+    border-radius: var(--radius-md);
+    background: #ffffff;
+    box-shadow: var(--shadow-md);
+
+    form { margin: 0; }
+  }
+
+  &__label {
+    padding: 0.45rem 0.85rem 0.25rem;
+    font-size: 0.75rem;
+    color: var(--scrim-on-light-55, rgba(0, 0, 0, 0.55));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__logout {
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    border: none;
+    background: transparent;
+    color: #1f002a;
+    font-size: 0.85rem;
+    text-align: left;
+
+    &:hover { background: var(--scrim-4-on-light, rgba(0, 0, 0, 0.05)); }
+  }
+}
+
 .app-lang-flag {
   display: block;
   border-radius: 2px;

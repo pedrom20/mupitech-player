@@ -12,6 +12,7 @@ from urllib.parse import urlparse, urlunparse
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
+from django.contrib.auth import logout as django_logout
 from django.http import (
     FileResponse,
     Http404,
@@ -1935,6 +1936,12 @@ def login(request: HttpRequest) -> HttpResponse:
             return template(request, 'login.html', {'next': next_url, 'fm_login_available': fm_login_available()})
 
     return template(request, 'login.html', {'next': next_url, 'fm_login_available': fm_login_available()})
+
+
+@require_http_methods(['POST'])
+def logout_view(request: HttpRequest) -> HttpResponse:
+    django_logout(request)
+    return redirect(reverse('anthias_app:login'))
 
 
 @require_http_methods(['GET'])

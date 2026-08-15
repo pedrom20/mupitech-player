@@ -12,6 +12,39 @@
 
     {% get_current_language as CURRENT_LANGUAGE %}
     {% comment %}
+      Only rendered once a real session exists — with auth disabled
+      (settings['auth_backend'] == '') request.user is Django's
+      AnonymousUser and is_authenticated is always False, so this stays
+      hidden rather than showing a menu with nothing meaningful to sign
+      out of.
+    {% endcomment %}
+    {% if user.is_authenticated %}
+    <div class="app-user-menu ml-auto lg:ml-0" x-data="{ userOpen: false }" @click.outside="userOpen = false">
+      <button
+        type="button"
+        class="app-user-menu__toggle"
+        @click="userOpen = !userOpen"
+        :aria-expanded="userOpen.toString()"
+        aria-haspopup="true"
+      >
+        <i class="ti ti-user-circle"></i>
+        <span class="app-user-menu__username">{{ user.username }}</span>
+        <i class="ti ti-chevron-down"></i>
+      </button>
+      <div class="app-user-menu__menu" x-show="userOpen" x-cloak x-transition>
+        <div class="app-user-menu__label">{% translate "Signed in as" %} {{ user.username }}</div>
+        <form action="{% url 'anthias_app:logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="app-user-menu__logout">
+            <i class="ti ti-logout"></i>
+            <span>{% translate "Sign out" %}</span>
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {% comment %}
       Flag-based dropdown, matching the Fleet Manager's own language
       switcher (static/src/components/language-switcher.tsx) — same
       inline SVG flags (work on every platform, no font/emoji fallback
@@ -19,7 +52,7 @@
       A plain <select> can't show a flag as its own closed-state face,
       so this needs the extra markup instead of reusing that one-liner.
     {% endcomment %}
-    <div class="app-lang-switcher ml-auto lg:ml-0" x-data="{ langOpen: false }" @click.outside="langOpen = false">
+    <div class="app-lang-switcher {% if not user.is_authenticated %}ml-auto{% endif %} lg:ml-0" x-data="{ langOpen: false }" @click.outside="langOpen = false">
       <button
         type="button"
         class="app-lang-switcher__toggle"
