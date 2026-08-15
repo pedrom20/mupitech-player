@@ -28,6 +28,12 @@ msgstr "Definições"
 msgid "System info"
 msgstr "Informação do sistema"
 
+msgid "Signed in as"
+msgstr "Sessão iniciada como"
+
+msgid "Sign out"
+msgstr "Terminar sessão"
+
 # --- home.html ---
 msgid "Schedule Overview"
 msgstr "Vista Geral do Horário"
