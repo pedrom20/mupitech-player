@@ -2005,13 +2005,27 @@ $footer-height: 13rem;
 
 .splash-headline {
   margin: 0 0 var(--space-2) 0;
-  // .splash-card caps out at 64rem (see above), so past that width the
-  // two-column layout's body column plateaus at a fixed pixel width —
-  // the old clamp topped out at 2.5rem, sized without ever checking it
-  // against that steady-state width, so the (long, PT) headline wrapped
-  // to two lines on every screen wide enough to show the QR side by
-  // side, not just cramped ones. Capped lower so it actually fits.
-  font-size: clamp(1.35rem, 1.6vw + 0.9rem, 1.75rem);
+  // .splash-card caps out at 64rem = 1024px (see above), so past that
+  // viewport width the two-column layout's body column plateaus at a
+  // fixed pixel width, not a moving vw-relative one — a clamp() whose
+  // max was never checked against that steady-state width wraps to two
+  // lines on every screen wide enough to show the QR side by side, not
+  // just cramped ones (this has now happened twice with the previous,
+  // still-too-large cap of 2.5rem, then 1.75rem).
+  //
+  // At the 1024px plateau: card padding maxes at 3rem/side (padding:
+  // clamp(1.5rem, 4vw, 3rem) — 4vw of a wide viewport always exceeds
+  // its own 3rem cap), leaving ~928px inside; the QR slot maxes at
+  // 12rem (.splash-qr's own clamp) plus ~2×var(--space-4) padding
+  // around it (~240px total), and the grid gap maxes at 2.5rem (40px)
+  // — leaving the body/headline column roughly 928 − 240 − 40 ≈ 648px
+  // wide at most. The shorter headline text (splash-page.html) plus
+  // this lower cap were confirmed to fit on one line via a headless
+  // Chrome screenshot of the built anthias.css against the real markup
+  // (1920/1280/1024/768px widths) — there's no way to load this splash
+  // page from a dev environment otherwise (it's the device's own
+  // first-boot screen).
+  font-size: clamp(1.2rem, 1.2vw + 0.85rem, 1.5rem);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.01em;
