@@ -11,6 +11,91 @@
     </a>
 
     {% get_current_language as CURRENT_LANGUAGE %}
+    {% comment %}
+      Only rendered once a real session exists — with auth disabled
+      (settings['auth_backend'] == '') request.user is Django's
+      AnonymousUser and is_authenticated is always False, so this stays
+      hidden rather than showing a menu with nothing meaningful to sign
+      out of.
+    {% endcomment %}
+    {% if user.is_authenticated %}
+    <div class="app-user-menu ml-auto lg:ml-0" x-data="{ userOpen: false }" @click.outside="userOpen = false">
+      <button
+        type="button"
+        class="app-user-menu__toggle"
+        @click="userOpen = !userOpen"
+        :aria-expanded="userOpen.toString()"
+        aria-haspopup="true"
+      >
+        <i class="ti ti-user-circle"></i>
+        <span class="app-user-menu__username">{{ user.username }}</span>
+        <i class="ti ti-chevron-down"></i>
+      </button>
+      <div class="app-user-menu__menu" x-show="userOpen" x-cloak x-transition>
+        <div class="app-user-menu__label">{% translate "Signed in as" %} {{ user.username }}</div>
+        <form action="{% url 'anthias_app:logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="app-user-menu__logout">
+            <i class="ti ti-logout"></i>
+            <span>{% translate "Sign out" %}</span>
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {% comment %}
+      Flag-based dropdown, matching the Fleet Manager's own language
+      switcher (static/src/components/language-switcher.tsx) — same
+      inline SVG flags (work on every platform, no font/emoji fallback
+      issues on Windows) so the two products read as one design system.
+      A plain <select> can't show a flag as its own closed-state face,
+      so this needs the extra markup instead of reusing that one-liner.
+    {% endcomment %}
+    <div class="app-lang-switcher {% if not user.is_authenticated %}ml-auto{% endif %} lg:ml-0" x-data="{ langOpen: false }" @click.outside="langOpen = false">
+      <button
+        type="button"
+        class="app-lang-switcher__toggle"
+        @click="langOpen = !langOpen"
+        :aria-expanded="langOpen.toString()"
+        aria-haspopup="true"
+        aria-label="{% translate 'Language' %}"
+      >
+        {% if CURRENT_LANGUAGE == 'pt' %}
+          {% include '_lang_flag_pt.html' %}
+        {% else %}
+          {% include '_lang_flag_en.html' %}
+        {% endif %}
+      </button>
+      <div class="app-lang-switcher__menu" x-show="langOpen" x-cloak x-transition>
+        <form action="{% url 'set_language' %}" method="post">
+          {% csrf_token %}
+          <input name="next" type="hidden" value="{{ request.path }}">
+          <button
+            type="submit"
+            name="language"
+            value="pt"
+            class="app-lang-switcher__option {% if CURRENT_LANGUAGE == 'pt' %}app-lang-switcher__option--active{% endif %}"
+          >
+            {% include '_lang_flag_pt.html' %}
+            <span>Português</span>
+          </button>
+        </form>
+        <form action="{% url 'set_language' %}" method="post">
+          {% csrf_token %}
+          <input name="next" type="hidden" value="{{ request.path }}">
+          <button
+            type="submit"
+            name="language"
+            value="en"
+            class="app-lang-switcher__option {% if CURRENT_LANGUAGE == 'en' %}app-lang-switcher__option--active{% endif %}"
+          >
+            {% include '_lang_flag_en.html' %}
+            <span>English</span>
+          </button>
+        </form>
+      </div>
+    </div>
 
     <button
       class="app-nav-toggler lg:hidden"
@@ -23,13 +108,9 @@
       <i class="ti ti-menu-2"></i>
     </button>
 
-    {# Desktop: always visible, in normal flow (nothing pushes it right —
-       the lang switcher below is what claims the row's remaining space
-       via ml-auto, same as the Fleet Manager's own navbar where the nav
-       links sit centered and <LanguageSwitcher />/<UserMenu /> are the
-       true rightmost elements). Mobile: show only when open. #}
+    {# Desktop: always visible. Mobile: show only when open. #}
     <div
-      class="basis-full lg:basis-auto"
+      class="basis-full lg:basis-auto lg:ml-auto"
       :class="open ? 'block' : 'hidden lg:block'"
       id="navbarNav"
     >
@@ -85,97 +166,5 @@
         </li>
       </ul>
     </div>
-
-    {% comment %}
-      Flag-based dropdown, matching the Fleet Manager's own language
-      switcher (static/src/components/language-switcher.tsx) — same
-      inline SVG flags (work on every platform, no font/emoji fallback
-      issues on Windows) so the two products read as one design system.
-      A plain <select> can't show a flag as its own closed-state face,
-      so this needs the extra markup instead of reusing that one-liner.
-      ml-auto here (not on the nav links above, not on the user menu
-      below) claims the row's remaining space so language-switcher then
-      user-menu sit flush against the right edge — same left-to-right
-      order and same "true rightmost" position as the Fleet Manager's
-      own navbar (static/src/components/navbar.tsx:
-      <LanguageSwitcher /> {isAuthenticated && <UserMenu />}).
-    {% endcomment %}
-    <div class="app-lang-switcher ml-auto" x-data="{ langOpen: false }" @click.outside="langOpen = false">
-      <button
-        type="button"
-        class="app-lang-switcher__toggle"
-        @click="langOpen = !langOpen"
-        :aria-expanded="langOpen.toString()"
-        aria-haspopup="true"
-        aria-label="{% translate 'Language' %}"
-      >
-        {% if CURRENT_LANGUAGE == 'pt' %}
-          {% include '_lang_flag_pt.html' %}
-        {% else %}
-          {% include '_lang_flag_en.html' %}
-        {% endif %}
-      </button>
-      <div class="app-lang-switcher__menu" x-show="langOpen" x-cloak x-transition>
-        <form action="{% url 'set_language' %}" method="post">
-          {% csrf_token %}
-          <input name="next" type="hidden" value="{{ request.path }}">
-          <button
-            type="submit"
-            name="language"
-            value="pt"
-            class="app-lang-switcher__option {% if CURRENT_LANGUAGE == 'pt' %}app-lang-switcher__option--active{% endif %}"
-          >
-            {% include '_lang_flag_pt.html' %}
-            <span>Português</span>
-          </button>
-        </form>
-        <form action="{% url 'set_language' %}" method="post">
-          {% csrf_token %}
-          <input name="next" type="hidden" value="{{ request.path }}">
-          <button
-            type="submit"
-            name="language"
-            value="en"
-            class="app-lang-switcher__option {% if CURRENT_LANGUAGE == 'en' %}app-lang-switcher__option--active{% endif %}"
-          >
-            {% include '_lang_flag_en.html' %}
-            <span>English</span>
-          </button>
-        </form>
-      </div>
-    </div>
-
-    {% comment %}
-      Only rendered once a real session exists — with auth disabled
-      (settings['auth_backend'] == '') request.user is Django's
-      AnonymousUser and is_authenticated is always False, so this stays
-      hidden rather than showing a menu with nothing meaningful to sign
-      out of.
-    {% endcomment %}
-    {% if user.is_authenticated %}
-    <div class="app-user-menu" x-data="{ userOpen: false }" @click.outside="userOpen = false">
-      <button
-        type="button"
-        class="app-user-menu__toggle"
-        @click="userOpen = !userOpen"
-        :aria-expanded="userOpen.toString()"
-        aria-haspopup="true"
-      >
-        <i class="ti ti-user-circle"></i>
-        <span class="app-user-menu__username">{{ user.username }}</span>
-        <i class="ti ti-chevron-down"></i>
-      </button>
-      <div class="app-user-menu__menu" x-show="userOpen" x-cloak x-transition>
-        <div class="app-user-menu__label">{% translate "Signed in as" %} {{ user.username }}</div>
-        <form action="{% url 'anthias_app:logout' %}" method="post">
-          {% csrf_token %}
-          <button type="submit" class="app-user-menu__logout">
-            <i class="ti ti-logout"></i>
-            <span>{% translate "Sign out" %}</span>
-          </button>
-        </form>
-      </div>
-    </div>
-    {% endif %}
   </div>
 </nav>
