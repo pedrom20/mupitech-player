@@ -35,6 +35,51 @@
       </ul>
       {% endif %}
 
+      {% if fm_login_available %}
+      <div x-data="{ mode: 'device' }">
+        <div class="auth-mode-tabs" role="tablist">
+          <button type="button" role="tab" :aria-selected="mode === 'device'" :class="mode === 'device' ? 'active' : ''" @click="mode = 'device'">
+            {% translate "This device" %}
+          </button>
+          <button type="button" role="tab" :aria-selected="mode === 'fm'" :class="mode === 'fm' ? 'active' : ''" @click="mode = 'fm'">
+            {% translate "Fleet Manager account" %}
+          </button>
+        </div>
+
+        <form method="post" action="{% url 'anthias_app:login' %}" class="auth-form" x-show="mode === 'device'">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}">
+          <div class="app-floating">
+            <input type="text" class="app-input" id="username" name="username" placeholder=" " autocomplete="username" required>
+            <label for="username">{% translate "Username" %}</label>
+          </div>
+          <div class="app-floating">
+            <input type="password" class="app-input" id="password" name="password" placeholder=" " autocomplete="current-password" required>
+            <label for="password">{% translate "Password" %}</label>
+          </div>
+          <button type="submit" class="app-btn app-btn-primary auth-submit">
+            <i class="ti ti-login"></i><span>{% translate "Sign in" %}</span>
+          </button>
+        </form>
+
+        <form method="post" action="{% url 'mupitech_fm_login' %}" class="auth-form" x-show="mode === 'fm'" x-cloak>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}">
+          <p class="auth-subhead" style="margin-top: 0;">{% translate "Sign in with the same account you use in the Fleet Manager." %}</p>
+          <div class="app-floating">
+            <input type="text" class="app-input" id="fm_username" name="fm_username" placeholder=" " autocomplete="username" required>
+            <label for="fm_username">{% translate "Fleet Manager username" %}</label>
+          </div>
+          <div class="app-floating">
+            <input type="password" class="app-input" id="fm_password" name="fm_password" placeholder=" " autocomplete="current-password" required>
+            <label for="fm_password">{% translate "Fleet Manager password" %}</label>
+          </div>
+          <button type="submit" class="app-btn app-btn-primary auth-submit">
+            <i class="ti ti-login"></i><span>{% translate "Sign in" %}</span>
+          </button>
+        </form>
+      </div>
+      {% else %}
       <form method="post" action="{% url 'anthias_app:login' %}" class="auth-form">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
@@ -50,6 +95,7 @@
           <i class="ti ti-login"></i><span>{% translate "Sign in" %}</span>
         </button>
       </form>
+      {% endif %}
     </div>
   </main>
 </div>

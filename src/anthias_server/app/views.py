@@ -36,6 +36,7 @@ from anthias_common.utils import (
     is_disk_full,
 )
 from anthias_server.app import page_context
+from anthias_server.app.mupitech_device_login_views import fm_login_available
 from anthias_server.app.models import (
     clamp_duration,
     clamp_refresh_interval,
@@ -1931,9 +1932,9 @@ def login(request: HttpRequest) -> HttpResponse:
             return redirect(redirect_target)
         else:
             messages.error(request, 'Invalid username or password')
-            return template(request, 'login.html', {'next': next_url})
+            return template(request, 'login.html', {'next': next_url, 'fm_login_available': fm_login_available()})
 
-    return template(request, 'login.html', {'next': next_url})
+    return template(request, 'login.html', {'next': next_url, 'fm_login_available': fm_login_available()})
 
 
 @require_http_methods(['GET'])

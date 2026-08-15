@@ -2232,6 +2232,37 @@ body.auth-body {
   gap: var(--space-1);
 }
 
+// Toggle between device-local and Fleet Manager credentials on the
+// login page — only rendered when fm_login_available (see
+// views.py::login + mupitech_device_login_views.py).
+.auth-mode-tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: 3px;
+  background: var(--color-bg-muted, rgba(0, 0, 0, 0.04));
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-1);
+
+  button {
+    flex: 1;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    padding: 0.45rem 0.5rem;
+    border-radius: calc(var(--radius-md) - 2px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    transition: background var(--t-fast), color var(--t-fast);
+
+    &.active {
+      background: var(--color-surface);
+      color: var(--color-text);
+      box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+    }
+  }
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;

@@ -42,6 +42,17 @@ DEFAULTS = {
         # means this device hasn't been provisioned for SSO yet, in
         # which case the callback view rejects every token outright.
         'sso_secret': '',
+        # This Fleet Manager's own base URL and this device's player id
+        # in that FM's database — both pushed alongside sso_secret (same
+        # SSH provisioning call, see players/sso.py::push_sso_secret_to_player).
+        # Together they let the device call *back* to the FM to verify FM
+        # credentials typed directly into this device's own login page
+        # (mupitech_device_login_views.py) — the reverse direction from
+        # the SSO callback above, which only ever receives a call, never
+        # makes one. Empty means that login path is unavailable; the
+        # login page falls back to device-only credentials.
+        'fm_base_url': '',
+        'fm_player_id': '',
         # State for the "Star on GitHub / Review on G2" nudge (server-
         # side so it survives a browser/cache clear and stays consistent
         # across every device the operator opens the UI from).
