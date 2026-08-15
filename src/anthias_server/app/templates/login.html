@@ -17,6 +17,11 @@
   <link href="{% static 'dist/css/anthias.css' %}" rel="stylesheet"/>
   <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg"/>
   <link rel="icon" href="/static/favicons/favicon.ico"/>
+  {# Alpine only (no htmx/flatpickr/WebSocket) — see static/src/auth.ts.
+     This page's x-data mode toggle (below) needs Alpine running; base.html's
+     vendor.js would bring it in too, but also an unconditional WebSocket
+     connect this pre-auth page deliberately avoids (see the comment above). #}
+  <script src="{% static 'dist/js/auth.js' %}" defer></script>
 </head>
 <body class="auth-body">
 <div class="auth-page">
