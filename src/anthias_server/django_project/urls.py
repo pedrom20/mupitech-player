@@ -22,7 +22,7 @@ from django.urls import include, path, re_path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
 
 from anthias_server.app import views_files
-from anthias_server.app.mupitech_device_login_views import fm_login
+from anthias_server.app.mupitech_device_login_views import fm_login, fm_login_mfa
 from anthias_server.app.mupitech_sso_views import sso_callback
 from anthias_server.app.mupitech_standby_views import standby_video
 from anthias_server.lib.auth import authorized
@@ -54,6 +54,7 @@ urlpatterns = [
     path('sso/callback/', sso_callback, name='mupitech_sso_callback'),
     # MupiTech addition — see mupitech_device_login_views.py's module docstring.
     path('login/fm/', fm_login, name='mupitech_fm_login'),
+    path('login/fm/mfa/', fm_login_mfa, name='mupitech_fm_login_mfa'),
     path('api/', include('anthias_server.api.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', APIDocView.as_view(url_name='schema'), name='redoc'),

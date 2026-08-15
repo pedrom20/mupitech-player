@@ -1,0 +1,98 @@
+{% load static %}
+{% load i18n %}
+{% comment %}
+  Second step of the FM-account login (see mupitech_device_login_views.py::
+  fm_login_mfa) — reached only once fm_login found the typed account has
+  MFA enrolled. Standalone shell, same reasoning as login.html: no
+  base.html/vendor.js, so no unconditional WebSocket connect on a
+  pre-auth page. Needs Alpine for nothing here (this page's interactions
+  are all plain form POSTs, unlike login.html's device/FM tab toggle),
+  so it doesn't even load auth.js.
+{% endcomment %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{% translate "Login to MupiTech" %}</title>
+  <link href="{% static 'dist/css/tabler-icons.css' %}" rel="stylesheet"/>
+  <link href="{% static 'dist/css/anthias.css' %}" rel="stylesheet"/>
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg"/>
+  <link rel="icon" href="/static/favicons/favicon.ico"/>
+</head>
+<body class="auth-body">
+<div class="auth-page">
+  <main class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-card__brand">
+        <img src="{% static 'img/dark.svg' %}" alt="MupiTech" class="auth-logo"/>
+      </div>
+
+      <h1 class="auth-headline">{% translate "Two-factor verification" %}</h1>
+      {% if dual_required %}
+        <p class="auth-subhead">
+          {% blocktranslate %}Step {{ stage }} of 2 — this account requires two different verification methods.{% endblocktranslate %}
+        </p>
+      {% endif %}
+
+      {% if messages %}
+      <ul class="auth-alert" role="alert">
+        {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if kind == 'push' %}
+        <p class="auth-subhead">
+          {% if method == 'duo' %}
+            {% translate "Check your phone for a Duo Mobile approval request…" %}
+          {% else %}
+            {% translate "Check your phone for a privacyIDEA Authenticator approval request…" %}
+          {% endif %}
+        </p>
+        <form method="post" action="{% url 'mupitech_fm_login_mfa' %}" class="auth-form">
+          {% csrf_token %}
+          <button type="submit" class="app-btn app-btn-primary auth-submit">
+            <i class="ti ti-refresh"></i><span>{% translate "Send push again" %}</span>
+          </button>
+        </form>
+      {% else %}
+        <p class="auth-subhead">{% translate "Enter the 6-digit code from your authenticator app." %}</p>
+        <form method="post" action="{% url 'mupitech_fm_login_mfa' %}" class="auth-form">
+          {% csrf_token %}
+          <div class="app-floating">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code"
+                   class="app-input" id="code" name="code" placeholder=" " maxlength="6" required autofocus>
+            <label for="code">{% translate "Code" %}</label>
+          </div>
+          <button type="submit" class="app-btn app-btn-primary auth-submit">
+            <i class="ti ti-shield-check"></i><span>{% translate "Verify" %}</span>
+          </button>
+        </form>
+      {% endif %}
+
+      {% for other in other_methods %}
+      <form method="post" action="{% url 'mupitech_fm_login_mfa' %}" class="auth-form" style="margin-top: 0.5rem;">
+        {% csrf_token %}
+        <input type="hidden" name="switch_method" value="{{ other }}">
+        <button type="submit" class="app-btn app-btn-link auth-submit">
+          {% if other == 'totp' %}{% translate "Use an authenticator code instead" %}
+          {% elif other == 'duo' %}{% translate "Use Duo push instead" %}
+          {% elif other == 'privacyidea' %}{% translate "Use privacyIDEA instead" %}
+          {% else %}{{ other }}
+          {% endif %}
+        </button>
+      </form>
+      {% endfor %}
+
+      <form method="post" action="{% url 'mupitech_fm_login_mfa' %}" class="auth-form" style="margin-top: 0.5rem;">
+        {% csrf_token %}
+        <input type="hidden" name="back" value="1">
+        <button type="submit" class="app-btn app-btn-link auth-submit">
+          <i class="ti ti-arrow-left"></i><span>{% translate "Back" %}</span>
+        </button>
+      </form>
+    </div>
+  </main>
+</div>
+</body>
+</html>
