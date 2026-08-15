@@ -190,6 +190,21 @@ msgstr "Palavra-passe"
 msgid "Sign in"
 msgstr "Iniciar sessão"
 
+msgid "This device"
+msgstr "Este dispositivo"
+
+msgid "Fleet Manager account"
+msgstr "Conta do Gestor de Mupis Digitais"
+
+msgid "Sign in with the same account you use in the Fleet Manager."
+msgstr "Inicie sessão com a mesma conta que usa no Gestor de Mupis Digitais."
+
+msgid "Fleet Manager username"
+msgstr "Utilizador do Gestor de Mupis Digitais"
+
+msgid "Fleet Manager password"
+msgstr "Palavra-passe do Gestor de Mupis Digitais"
+
 # --- _error.html + 400/403/404/500/403_csrf ---
 msgid "Error — MupiTech"
 msgstr "Erro — MupiTech"
@@ -870,7 +885,23 @@ msgid "This login link didn't work"
 msgstr "Este link de acesso não funcionou"
 
 msgid "It may have expired, already been used, or this device isn't set up for Fleet Manager login yet. Try opening it again from the Fleet Manager, or log in here directly."
-msgstr "Pode ter expirado, já ter sido usado, ou este dispositivo ainda não está configurado para login pelo Fleet Manager. Tente abrir novamente a partir do Fleet Manager, ou inicie sessão aqui diretamente."
+msgstr "Pode ter expirado, já ter sido usado, ou este dispositivo ainda não está configurado para login pelo Gestor de Mupis Digitais. Tente abrir novamente a partir do Gestor de Mupis Digitais, ou inicie sessão aqui diretamente."
 
 msgid "Go to login"
 msgstr "Ir para o login"
+
+# --- mupitech_device_login_views.py ---
+msgid "This device hasn't been set up for Fleet Manager login yet."
+msgstr "Este dispositivo ainda não está configurado para login pelo Gestor de Mupis Digitais."
+
+msgid "Couldn't reach the Fleet Manager — try again shortly."
+msgstr "Não foi possível contactar o Gestor de Mupis Digitais — tente novamente daqui a pouco."
+
+msgid "This account has two-factor authentication enabled — use the \"Open local dashboard\" link from the device page in the Fleet Manager instead."
+msgstr "Esta conta tem autenticação de dois fatores ativada — use antes a ligação \"Abrir painel local\" a partir da página do dispositivo no Gestor de Mupis Digitais."
+
+msgid "Invalid Fleet Manager username or password."
+msgstr "Utilizador ou palavra-passe do Gestor de Mupis Digitais inválidos."
+
+msgid "Couldn't verify those credentials with the Fleet Manager."
+msgstr "Não foi possível verificar essas credenciais com o Gestor de Mupis Digitais."
