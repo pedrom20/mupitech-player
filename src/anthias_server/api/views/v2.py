@@ -877,6 +877,17 @@ class InfoViewV2(InfoViewMixin):
 
         return device_model
 
+    def get_device_type(self) -> str | None:
+        # MupiTech Fleet Manager's own player_views.py::register_player
+        # already recognizes a Pi 4/5 from device_model's text (it
+        # always says "Raspberry Pi 4/5 ..." or "Compute Module 4/5 ...")
+        # — this field only needs to cover x86, whose device_model is
+        # either a real vendor/CPU string or the 'Generic x86_64 Device'
+        # fallback above, neither of which is reliably pattern-matched
+        # the same way. None on Pi leaves the FM's own text-based
+        # detection as the only source there, unchanged.
+        return 'x86' if machine() == 'x86_64' else None
+
     def get_uptime(self) -> dict[str, int | float]:
         system_uptime = timedelta(seconds=diagnostics.get_uptime())
         return {
@@ -942,6 +953,7 @@ class InfoViewV2(InfoViewMixin):
                     'up_to_date': {'type': 'boolean'},
                     'anthias_version': {'type': 'string'},
                     'device_model': {'type': 'string'},
+                    'device_type': {'type': 'string', 'nullable': True},
                     'uptime': {
                         'type': 'object',
                         'properties': {
@@ -997,6 +1009,7 @@ class InfoViewV2(InfoViewMixin):
                 'up_to_date': is_up_to_date(),
                 'anthias_version': self.get_anthias_version(),
                 'device_model': self.get_device_model(),
+                'device_type': self.get_device_type(),
                 'uptime': self.get_uptime(),
                 'memory': self.get_memory(),
                 'ip_addresses': self.get_ip_addresses(),
