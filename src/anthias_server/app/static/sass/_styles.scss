@@ -2545,26 +2545,66 @@ body.auth-body {
 }
 
 .app-lang-switcher {
-  &__select {
+  position: relative;
+
+  &__toggle {
     cursor: pointer;
     background: transparent;
     border: 1px solid var(--scrim-on-dark-15);
-    color: var(--color-text-on-dark);
-    padding: 0.35rem 0.5rem;
     border-radius: var(--radius-md);
-    font-size: 0.85rem;
-    line-height: 1;
+    padding: 0.3rem;
+    line-height: 0;
+    display: inline-flex;
+    align-items: center;
+    transition: background var(--t-fast);
 
-    option {
-      // Selects render their popup with the OS's own light theme by
-      // default regardless of the trigger's dark styling above —
-      // force a light option list so it doesn't render as
-      // near-invisible pale text on a pale background on some
-      // platforms (e.g. Windows' default select popup rendering).
-      color: #1f002a;
-      background: #ffffff;
+    &:hover { background: var(--scrim-4); }
+  }
+
+  &__menu {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    z-index: 1060;
+    min-width: 150px;
+    padding: 0.25rem 0;
+    border-radius: var(--radius-md);
+    // Matches .app-nav-brand's own light-popup convention (same reasoning
+    // as the old <select>'s option list below) — a light dropdown reads
+    // reliably regardless of OS/browser theme, unlike a dark one layered
+    // over this page's own dark gradient background.
+    background: #ffffff;
+    box-shadow: var(--shadow-md);
+
+    form { margin: 0; }
+  }
+
+  &__option {
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    border: none;
+    background: transparent;
+    color: #1f002a;
+    font-size: 0.85rem;
+    text-align: left;
+
+    &:hover { background: var(--scrim-4-on-light, rgba(0, 0, 0, 0.05)); }
+
+    &--active {
+      font-weight: 600;
+      color: var(--color-accent-2, #7c3aed);
     }
   }
+}
+
+.app-lang-flag {
+  display: block;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 .app-nav-toggler {
   cursor: pointer;
