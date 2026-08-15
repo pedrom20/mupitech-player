@@ -44,6 +44,20 @@ _REQUEST_TIMEOUT_S = 10
 
 
 def fm_login_available() -> bool:
+    # Re-read anthias.conf rather than trusting this worker's in-memory
+    # copy: players/sso.py::push_sso_secret_to_player on the Fleet
+    # Manager side writes these three keys via a short-lived `docker
+    # exec ... python -c "...; settings.save()"` call, a *different*
+    # process from the one serving this request — that process's own
+    # AnthiasSettings.save() correctly reloads its own copy, but it
+    # never touches the long-running web server's separate singleton
+    # (module-level `settings = AnthiasSettings()` in settings.py,
+    # instantiated once at worker start). Confirmed live: a push
+    # landed on disk immediately, but the login page kept hiding this
+    # tab until the anthias-server container was restarted. A cheap
+    # small-INI-file read on every login page view is a fair trade for
+    # never hitting that again.
+    settings.load()
     return bool(settings['fm_base_url'] and settings['fm_player_id'] and settings['sso_secret'])
 
 
