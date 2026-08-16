@@ -1,8 +1,10 @@
 {% extends "_error.html" %}
 {% load i18n %}
-{# MupiTech addition — shown by mupitech_sso_views.py when a Fleet
-   Manager SSO login link is invalid, expired, or this device hasn't
-   been provisioned for SSO yet. #}
+{% comment %}
+  MupiTech addition — shown by mupitech_sso_views.py when a Fleet
+  Manager SSO login link is invalid, expired, or this device hasn't
+  been provisioned for SSO yet.
+{% endcomment %}
 
 {% block title %}{% translate "SSO login failed — MupiTech" %}{% endblock %}
 {% block error_icon %}ti-shield-x{% endblock %}
