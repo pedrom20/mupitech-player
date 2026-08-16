@@ -34,6 +34,12 @@ msgstr "Sessão iniciada como"
 msgid "Sign out"
 msgstr "Terminar sessão"
 
+msgid "Managed by Fleet Manager"
+msgstr "Gerido pelo Gestor de Mupis Digitais"
+
+msgid "This device is managed by a Fleet Manager — settings changed there take precedence."
+msgstr "Este dispositivo é gerido por um Gestor de Mupis Digitais — alterações feitas aí têm prioridade."
+
 # --- home.html ---
 msgid "Schedule Overview"
 msgstr "Vista Geral do Horário"

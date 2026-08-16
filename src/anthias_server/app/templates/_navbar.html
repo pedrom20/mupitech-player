@@ -19,7 +19,13 @@
       out of.
     {% endcomment %}
     {% if user.is_authenticated %}
-    <div class="app-user-menu ml-auto lg:ml-0" x-data="{ userOpen: false }" @click.outside="userOpen = false">
+    {% if fm_managed %}
+    <span class="app-fm-badge ml-auto lg:ml-0" title="{% translate 'This device is managed by a Fleet Manager — settings changed there take precedence.' %}">
+      <i class="ti ti-server-2"></i>
+      <span>{% translate "Managed by Fleet Manager" %}</span>
+    </span>
+    {% endif %}
+    <div class="app-user-menu {% if not fm_managed %}ml-auto{% endif %} lg:ml-0" x-data="{ userOpen: false }" @click.outside="userOpen = false">
       <button
         type="button"
         class="app-user-menu__toggle"

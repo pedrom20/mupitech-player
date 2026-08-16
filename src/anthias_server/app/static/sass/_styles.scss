@@ -2650,6 +2650,26 @@ body.auth-body {
 // reasoning: a light dropdown reads reliably over the page's dark
 // gradient regardless of OS/browser theme) — just a username label
 // and a sign-out button instead of language options.
+// Shown next to the user menu once this device has been provisioned
+// with a Fleet Manager (page_context.py::navbar's fm_managed) — a
+// quiet reminder for whoever's logged in locally that FM-side settings
+// (branding, scheduling, access) take precedence over anything changed
+// here directly.
+.app-fm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--scrim-on-dark-15);
+  color: var(--color-text-on-dark);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  i { font-size: 0.85em; opacity: 0.85; }
+}
+
 .app-user-menu {
   position: relative;
 

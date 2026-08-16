@@ -50,6 +50,13 @@ def navbar() -> dict[str, Any]:
         'up_to_date': is_up_to_date(),
         'player_name': settings['player_name'],
         'custom_nav_logo_url': custom_nav_logo_url,
+        # Both are provisioned together by the same call, whether via
+        # players/sso.py::push_sso_secret_to_player (SSH push) or the
+        # newer players/pairing_views.py flow (self-service, see
+        # `pair_fleet_manager` management command) — checking both
+        # guards against a mid-provisioning half-state (SSO push failed
+        # partway through) still showing this as FM-managed.
+        'fm_managed': bool(settings['fm_base_url'] and settings['sso_secret']),
     }
 
 
