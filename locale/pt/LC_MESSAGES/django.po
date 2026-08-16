@@ -205,6 +205,46 @@ msgstr "Utilizador do Gestor de Mupis Digitais"
 msgid "Fleet Manager password"
 msgstr "Palavra-passe do Gestor de Mupis Digitais"
 
+# --- login_mfa.html ---
+msgid "Two-factor verification"
+msgstr "Verificação em dois passos"
+
+msgid "Step %(stage)s of 2 — this account requires two different verification methods."
+msgstr "Passo %(stage)s de 2 — esta conta exige dois métodos de verificação diferentes."
+
+msgid "Check your phone for a Duo Mobile approval request…"
+msgstr "Verifique o seu telemóvel — pedido de aprovação no Duo Mobile…"
+
+msgid "Check your phone for a privacyIDEA Authenticator approval request…"
+msgstr "Verifique o seu telemóvel — pedido de aprovação na app privacyIDEA Authenticator…"
+
+msgid "Send push again"
+msgstr "Enviar novamente"
+
+msgid "Enter the 6-digit code we just emailed you."
+msgstr "Introduza o código de 6 dígitos que acabámos de lhe enviar por email."
+
+msgid "Enter the 6-digit code from your authenticator app."
+msgstr "Introduza o código de 6 dígitos da sua app de autenticação."
+
+msgid "Verify"
+msgstr "Verificar"
+
+msgid "Resend code"
+msgstr "Reenviar código"
+
+msgid "Use an authenticator code instead"
+msgstr "Usar antes um código de autenticação"
+
+msgid "Use Duo push instead"
+msgstr "Usar antes o push do Duo"
+
+msgid "Use privacyIDEA instead"
+msgstr "Usar antes o privacyIDEA"
+
+msgid "Use an emailed code instead"
+msgstr "Usar antes um código por email"
+
 # --- _error.html + 400/403/404/500/403_csrf ---
 msgid "Error — MupiTech"
 msgstr "Erro — MupiTech"

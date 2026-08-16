@@ -5,9 +5,10 @@
   fm_login_mfa) — reached only once fm_login found the typed account has
   MFA enrolled. Standalone shell, same reasoning as login.html: no
   base.html/vendor.js, so no unconditional WebSocket connect on a
-  pre-auth page. Needs Alpine for nothing here (this page's interactions
-  are all plain form POSTs, unlike login.html's device/FM tab toggle),
-  so it doesn't even load auth.js.
+  pre-auth page. Needs no framework — the 6-box code input below is
+  plain vanilla JS (see the inline script), same auto-advance/paste/
+  backspace behaviour as the Fleet Manager's own React CodeInput
+  component, just without a framework to drive it here.
 {% endcomment %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
@@ -19,6 +20,51 @@
   <link href="{% static 'dist/css/anthias.css' %}" rel="stylesheet"/>
   <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg"/>
   <link rel="icon" href="/static/favicons/favicon.ico"/>
+  <style>
+    /* Entrance: the whole card settles in instead of popping in
+       instantly — same treatment regardless of which method (code,
+       push, switch-method reload) landed us here. */
+    .auth-card {
+      animation: mfa-card-in 0.35s ease-out;
+    }
+    @keyframes mfa-card-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .mfa-code-boxes {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .mfa-code-boxes.is-leaving {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    .mfa-code-box {
+      width: 2.75rem;
+      height: 3rem;
+      font-size: 1.25rem;
+      text-align: center;
+      padding: 0;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    .mfa-code-box.is-filled {
+      transform: scale(1.04);
+    }
+    .mfa-code-boxes.is-complete .mfa-code-box {
+      border-color: var(--app-success, #2fb344) !important;
+    }
+
+    /* Push (and every other non-code state) fades in the same way the
+       card itself does, so switching methods reads as one continuous
+       motion instead of a hard cut between states. */
+    .mfa-push-status {
+      animation: mfa-card-in 0.3s ease-out;
+    }
+  </style>
 </head>
 <body class="auth-body">
 <div class="auth-page">
@@ -42,13 +88,15 @@
       {% endif %}
 
       {% if kind == 'push' %}
-        <p class="auth-subhead">
-          {% if method == 'duo' %}
-            {% translate "Check your phone for a Duo Mobile approval request…" %}
-          {% else %}
-            {% translate "Check your phone for a privacyIDEA Authenticator approval request…" %}
-          {% endif %}
-        </p>
+        <div class="mfa-push-status">
+          <p class="auth-subhead">
+            {% if method == 'duo' %}
+              {% translate "Check your phone for a Duo Mobile approval request…" %}
+            {% else %}
+              {% translate "Check your phone for a privacyIDEA Authenticator approval request…" %}
+            {% endif %}
+          </p>
+        </div>
         <form method="post" action="{% url 'mupitech_fm_login_mfa' %}" class="auth-form">
           {% csrf_token %}
           <button type="submit" class="app-btn app-btn-primary auth-submit">
@@ -56,18 +104,113 @@
           </button>
         </form>
       {% else %}
-        <p class="auth-subhead">{% translate "Enter the 6-digit code from your authenticator app." %}</p>
-        <form method="post" action="{% url 'mupitech_fm_login_mfa' %}" class="auth-form">
+        {% if method == 'email' %}
+          <p class="auth-subhead">{% translate "Enter the 6-digit code we just emailed you." %}</p>
+        {% else %}
+          <p class="auth-subhead">{% translate "Enter the 6-digit code from your authenticator app." %}</p>
+        {% endif %}
+        <form method="post" action="{% url 'mupitech_fm_login_mfa' %}" class="auth-form" id="mfa-code-form">
           {% csrf_token %}
-          <div class="app-floating">
-            <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code"
-                   class="app-input" id="code" name="code" placeholder=" " maxlength="6" required autofocus>
-            <label for="code">{% translate "Code" %}</label>
+          <input type="hidden" name="code" id="mfa-code-value">
+          <div class="mfa-code-boxes" id="mfa-code-boxes">
+            {% for i in "123456" %}
+            <input
+              type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+              class="app-input mfa-code-box"
+              autocomplete="{% if forloop.first %}one-time-code{% else %}off{% endif %}"
+              {% if forloop.first %}autofocus{% endif %}
+            >
+            {% endfor %}
           </div>
           <button type="submit" class="app-btn app-btn-primary auth-submit">
             <i class="ti ti-shield-check"></i><span>{% translate "Verify" %}</span>
           </button>
         </form>
+        <script>
+          (function () {
+            var boxesEl = document.getElementById('mfa-code-boxes')
+            var boxes = Array.prototype.slice.call(boxesEl.querySelectorAll('.mfa-code-box'))
+            var hidden = document.getElementById('mfa-code-value')
+            var form = document.getElementById('mfa-code-form')
+            var submitted = false
+
+            function currentValue() {
+              return boxes.map(function (b) { return b.value }).join('')
+            }
+
+            function sync() {
+              hidden.value = currentValue()
+              boxes.forEach(function (b) { b.classList.toggle('is-filled', !!b.value) })
+            }
+
+            function distribute(startIndex, digits) {
+              for (var i = 0; i < digits.length && startIndex + i < boxes.length; i++) {
+                boxes[startIndex + i].value = digits[i]
+              }
+              sync()
+              var focusIndex = Math.min(startIndex + digits.length, boxes.length - 1)
+              boxes[focusIndex].focus()
+              maybeSubmit()
+            }
+
+            function maybeSubmit() {
+              var value = currentValue()
+              if (value.length === boxes.length && !submitted) {
+                submitted = true
+                boxesEl.classList.add('is-complete')
+                // Same "settle in, then leave" pairing as the entrance
+                // animation above — a beat to see the code confirmed
+                // filled before the page navigates away, instead of an
+                // instant hard cut to the next screen.
+                setTimeout(function () {
+                  boxesEl.classList.add('is-leaving')
+                  setTimeout(function () { form.submit() }, 220)
+                }, 150)
+              }
+            }
+
+            boxes.forEach(function (box, index) {
+              box.addEventListener('input', function () {
+                var digits = box.value.replace(/\D/g, '')
+                if (digits.length > 1) {
+                  box.value = ''
+                  distribute(index, digits)
+                  return
+                }
+                box.value = digits
+                sync()
+                if (digits && index < boxes.length - 1) boxes[index + 1].focus()
+                maybeSubmit()
+              })
+              box.addEventListener('keydown', function (e) {
+                if (e.key === 'Backspace' && !box.value && index > 0) {
+                  boxes[index - 1].focus()
+                } else if (e.key === 'ArrowLeft' && index > 0) {
+                  boxes[index - 1].focus()
+                } else if (e.key === 'ArrowRight' && index < boxes.length - 1) {
+                  boxes[index + 1].focus()
+                }
+              })
+              box.addEventListener('paste', function (e) {
+                var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '')
+                if (!pasted) return
+                e.preventDefault()
+                distribute(index, pasted)
+              })
+            })
+
+            form.addEventListener('submit', function () { sync() })
+          })()
+        </script>
+        {% if method == 'email' %}
+        <form method="post" action="{% url 'mupitech_fm_login_mfa' %}" class="auth-form" style="margin-top: 0.5rem;">
+          {% csrf_token %}
+          <input type="hidden" name="resend_email" value="1">
+          <button type="submit" class="app-btn app-btn-link auth-submit">
+            <i class="ti ti-refresh"></i><span>{% translate "Resend code" %}</span>
+          </button>
+        </form>
+        {% endif %}
       {% endif %}
 
       {% for other in other_methods %}
@@ -78,6 +221,7 @@
           {% if other == 'totp' %}{% translate "Use an authenticator code instead" %}
           {% elif other == 'duo' %}{% translate "Use Duo push instead" %}
           {% elif other == 'privacyidea' %}{% translate "Use privacyIDEA instead" %}
+          {% elif other == 'email' %}{% translate "Use an emailed code instead" %}
           {% else %}{{ other }}
           {% endif %}
         </button>

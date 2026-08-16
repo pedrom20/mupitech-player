@@ -85,7 +85,28 @@ def _verify_kind(method: str, push_methods: list[str]) -> str:
 def _verify_path(method: str, kind: str) -> str:
     if kind == 'push':
         return 'privacyidea-push-verify' if method == 'privacyidea' else 'duo-verify'
-    return 'privacyidea-verify' if method == 'privacyidea' else 'verify'
+    if method == 'privacyidea':
+        return 'privacyidea-verify'
+    if method == 'email':
+        return 'email-verify'
+    return 'verify'
+
+
+def _send_email_code(challenge: dict[str, Any]) -> None:
+    """Emails a fresh code for the 'email' method — the device-side
+    equivalent of login.tsx's sendEmailOtp() useEffect trigger on the
+    FM's own React login page. Fire-and-forget from this view's
+    perspective: a failure here just means the code form the user's
+    about to see won't have a valid code yet, and 'Resend code' lets
+    them try again; it never blocks rendering the page."""
+    try:
+        requests.post(
+            f"{settings['fm_base_url']}/api/auth/mfa/email-send/",
+            json={'challenge_id': challenge['challenge_id']},
+            timeout=_REQUEST_TIMEOUT_S,
+        )
+    except requests.RequestException as exc:
+        logger.warning('Fleet Manager email-otp send request failed: %s', exc)
 
 
 def _finish_device_login(request: HttpRequest, data: dict[str, Any], next_url: str) -> HttpResponse:
@@ -143,6 +164,7 @@ def fm_login(request: HttpRequest) -> HttpResponse:
                 'dual_required': data.get('dual_required', False),
                 'stage': data.get('stage', 1),
                 'push_attempted': False,
+                'email_sent': False,
                 'next': next_url,
             }
             return redirect(reverse('mupitech_fm_login_mfa'))
@@ -181,7 +203,12 @@ def fm_login_mfa(request: HttpRequest) -> HttpResponse:
             if new_method in challenge['available_methods']:
                 challenge['method'] = new_method
                 challenge['push_attempted'] = False
+                challenge['email_sent'] = False
                 request.session[_SESSION_KEY] = challenge
+            return redirect(reverse('mupitech_fm_login_mfa'))
+
+        if request.POST.get('resend_email'):
+            _send_email_code(challenge)
             return redirect(reverse('mupitech_fm_login_mfa'))
 
         code = request.POST.get('code', '') if kind == 'code' else ''
@@ -196,6 +223,11 @@ def fm_login_mfa(request: HttpRequest) -> HttpResponse:
         challenge['push_attempted'] = True
         request.session[_SESSION_KEY] = challenge
         return _submit_verify(request, challenge, '')
+
+    if challenge['method'] == 'email' and not challenge.get('email_sent'):
+        challenge['email_sent'] = True
+        request.session[_SESSION_KEY] = challenge
+        _send_email_code(challenge)
 
     return render(request, 'login_mfa.html', {
         'method': challenge['method'],
@@ -234,6 +266,7 @@ def _submit_verify(request: HttpRequest, challenge: dict[str, Any], code: str) -
             challenge['push_methods'] = data.get('push_methods') or []
             challenge['stage'] = data.get('stage', 2)
             challenge['push_attempted'] = False
+            challenge['email_sent'] = False
             request.session[_SESSION_KEY] = challenge
             return redirect(reverse('mupitech_fm_login_mfa'))
         return _finish_device_login(request, data, challenge.get('next', ''))
