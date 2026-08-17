@@ -32,12 +32,14 @@ CONFIG += c++17
 SOURCES += src/main.cpp \
     src/mainwindow.cpp \
     src/view.cpp \
-    src/rotation.cpp
+    src/rotation.cpp \
+    src/cookie_consent.cpp
 
 HEADERS += \
     src/mainwindow.h \
     src/view.h \
-    src/rotation.h
+    src/rotation.h \
+    src/cookie_consent.h
 
 greaterThan(QT_MAJOR_VERSION, 5) {
     QT += multimedia quickwidgets

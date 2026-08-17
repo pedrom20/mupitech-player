@@ -31,6 +31,7 @@
 #include <QtGlobal>
 
 #include "view.h"
+#include "cookie_consent.h"
 #include "rotation.h"
 
 // Attaches the operator-configured per-asset request headers (#2215) to
@@ -480,6 +481,25 @@ void View::configureWebView(QWebEngineView* view)
     // on a cancelled/empty document is a harmless no-op.
     if (imageRotation != 0) {
         const QString script = rotation::webpageRotationScript(imageRotation);
+        connect(page, &QWebEnginePage::loadFinished, this,
+            [page, script](bool) {
+                page->runJavaScript(
+                    script, QWebEngineScript::ApplicationWorld);
+            });
+    }
+
+    // Cookie/GDPR consent banner auto-dismiss (MupiTech addition, not
+    // upstream Anthias): unattended signage has no one to click
+    // "Accept" — see cookie_consent.h for why this is best-effort
+    // rather than universal. Same injection shape as the rotation
+    // script above (imperative runJavaScript on loadFinished rather
+    // than a declarative QWebEngineScript — that silently never fires
+    // on the Qt 5.15/qt5pi build; isolated ApplicationWorld so it
+    // bypasses the page's CSP); unconditional (every web-page asset,
+    // not gated on rotation) since the goal here applies regardless of
+    // screen orientation.
+    {
+        const QString script = cookieConsent::dismissScript();
         connect(page, &QWebEnginePage::loadFinished, this,
             [page, script](bool) {
                 page->runJavaScript(
