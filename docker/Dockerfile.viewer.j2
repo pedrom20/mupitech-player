@@ -176,6 +176,28 @@ ENV QT_QPA_EGLFS_KMS_CONFIG=/etc/anthias/eglfs-kms.json
 ENV QT_SCALE_FACTOR=1
 RUN mkdir -p /etc/anthias
 COPY docker/eglfs-kms.json /etc/anthias/eglfs-kms.json
+
+# MupiTech addition: the screenshot feature on these eglfs/KMS boards
+# (mupitech_screenshot_eglfs.py) captures via `ffmpeg -f kmsgrab`,
+# which needs CAP_SYS_ADMIN for the DRM_IOCTL_MODE_GETFB2 ioctl that
+# exports the scanout framebuffer — being in the `video` group (see
+# Dockerfile.base.j2) is only enough to open /dev/dri/cardN, not to
+# read its framebuffer handle. bin/start_viewer.sh runs the viewer
+# process as the unprivileged `viewer` user (sudo -u viewer), which
+# drops every capability on top of not being root, even though the
+# container itself is `privileged: true` — confirmed on real Pi 4
+# hardware: kmsgrab works run as root, fails as `viewer` with "No
+# handle set on framebuffer: maybe you need some additional
+# capabilities?" (exit 234). A file capability on the ffmpeg binary
+# itself grants CAP_SYS_ADMIN whenever THAT binary runs, regardless of
+# the calling user — same technique ping/traceroute use for
+# CAP_NET_RAW instead of a setuid binary. libcap2-bin (setcap) is
+# build-time only, removed again right after.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libcap2-bin && \
+    setcap cap_sys_admin+ep "$(command -v ffmpeg)" && \
+    apt-get purge -y --auto-remove libcap2-bin && \
+    rm -rf /var/lib/apt/lists/*
 {% else %}
 # Pi 2 / Pi 3 (32-bit, Qt5) keep the classic linuxfb path — the
 # GStreamer fbdev player paints directly to the framebuffer and
