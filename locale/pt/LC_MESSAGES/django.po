@@ -398,6 +398,9 @@ msgstr "Voltar"
 msgid "Add app"
 msgstr "Adicionar app"
 
+msgid "Add asset"
+msgstr "Adicionar conteúdo"
+
 msgid "Processing failed"
 msgstr "Falha no processamento"
 
