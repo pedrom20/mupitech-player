@@ -1630,11 +1630,13 @@ def show_standby() -> None:
     The image-vs-video decision is resolved once via a cheap HEAD
     request and cached for the life of this process rather than
     re-checked on every call (this is called every EMPTY_PL_DELAY
-    while the playlist is idle). A branding push that changes the
-    standby slot always restarts the anthias-server container (see
-    mupiteck's push_standby_image_to_player), which naturally
-    invalidates this cache by way of a fresh process — no explicit
-    invalidation needed.
+    while the playlist is idle). anthias-server serves the file this
+    HEAD request checks, but it's this container (anthias-viewer) that
+    caches the result — restarting anthias-server alone does nothing to
+    that cache. mupiteck's push_standby_image_to_player restarts BOTH
+    containers for exactly this reason; a standby override pushed any
+    other way needs an anthias-viewer restart (or a full device reboot)
+    before it takes effect.
     """
     global _standby_target
     if _standby_target is None:
