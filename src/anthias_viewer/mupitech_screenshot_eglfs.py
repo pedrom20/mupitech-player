@@ -42,7 +42,10 @@ second ffmpeg pass before returning it.
 
 import base64
 import glob
+import logging
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 _FFMPEG_TIMEOUT_S = 15
 
@@ -136,7 +139,16 @@ def capture_screenshot_b64() -> tuple[bool, str]:
             rotated = subprocess.run(
                 [
                     'ffmpeg', '-hide_banner', '-loglevel', 'error',
-                    '-f', 'image2', '-i', '-',
+                    # png_pipe, not image2: as an INPUT, image2 is a
+                    # sequence-of-numbered-files demuxer — reading a
+                    # single frame from a pipe with it fails with
+                    # "Could find no file with path 'fd:'". png_pipe
+                    # reads one raw PNG stream, which is what a
+                    # subprocess pipe actually is. Confirmed on real Pi 4
+                    # hardware: this exact mismatch made every rotated
+                    # capture silently fall back to the un-rotated
+                    # original below (exit 254, empty stdout).
+                    '-f', 'png_pipe', '-i', '-',
                     '-vf', rotation_filter,
                     '-f', 'image2', '-c:v', 'png', '-',
                 ],
@@ -149,8 +161,18 @@ def capture_screenshot_b64() -> tuple[bool, str]:
             return False, 'ffmpeg (rotation compensation) timed out.'
         if rotated.returncode == 0 and rotated.stdout:
             png_bytes = rotated.stdout
-        # A failed compensation pass still returns the un-rotated
-        # capture rather than nothing — a sideways screenshot is more
-        # useful for diagnosing a problem than no screenshot at all.
+        else:
+            # A failed compensation pass still returns the un-rotated
+            # capture rather than nothing — a sideways screenshot is
+            # more useful for diagnosing a problem than no screenshot
+            # at all. Logged rather than silent: this exact path
+            # masked the png_pipe/image2 bug above until someone
+            # actually looked at the resulting image.
+            logger.warning(
+                'Rotation compensation failed (exit %s), returning '
+                'un-rotated capture: %s',
+                rotated.returncode,
+                rotated.stderr.decode(errors='replace').strip(),
+            )
 
     return True, base64.b64encode(png_bytes).decode('ascii')
