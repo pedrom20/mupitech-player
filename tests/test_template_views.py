@@ -11,6 +11,7 @@ accumulate coverage. These tests do.
 from __future__ import annotations
 
 from datetime import time, timedelta
+from pathlib import Path
 from typing import Any
 from unittest import mock
 
@@ -22,6 +23,7 @@ from django.utils import timezone
 from anthias_server.app import page_context
 from anthias_server.app.models import DURATION_S_MAX, Asset
 from anthias_server.app.templatetags.asset_filters import to_json
+from anthias_server.settings import settings
 
 
 @pytest.fixture
@@ -219,6 +221,31 @@ def test_page_context_navbar_has_balena_and_up_to_date() -> None:
     assert 'is_balena' in ctx
     assert 'up_to_date' in ctx
     assert 'player_name' in ctx
+
+
+def test_navbar_custom_logo_only_set_when_marker_file_exists(
+    tmp_path: Path,
+) -> None:
+    """settings['splash_logo_url'] is a fixed value the Fleet Manager's
+    push overwrites in place rather than ever actually changing (see
+    players/branding.py::push_splash_logo_to_player on the FM side) —
+    confirmed live that a real pushed logo left it identical to the
+    bundled default, so custom_nav_logo_url has to key off something
+    else: the sentinel file that same push writes/removes alongside
+    the logo. Without it (no push has ever happened, or it was
+    reverted to the bundled default), the corner credit / custom navbar
+    mark must not show."""
+    marker = tmp_path / '.custom-logo'
+    with mock.patch.object(
+        page_context, '_CUSTOM_LOGO_MARKER_PATH', str(marker)
+    ):
+        assert page_context.navbar()['custom_nav_logo_url'] is None
+
+        marker.touch()
+        assert (
+            page_context.navbar()['custom_nav_logo_url']
+            == settings['splash_logo_url']
+        )
 
 
 def test_page_context_integrations_when_off_balena() -> None:

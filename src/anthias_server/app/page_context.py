@@ -27,11 +27,22 @@ from anthias_common.utils import (
 from anthias_server.lib import diagnostics
 from anthias_server.lib.github import is_up_to_date
 from anthias_server.lib.timezone import format_utc_offset
-from anthias_server.settings import DEFAULTS, settings
+from anthias_server.settings import settings
 
 _redis = connect_to_redis()
 
-_DEFAULT_SPLASH_LOGO_URL = DEFAULTS['main']['splash_logo_url']
+# The Fleet Manager pushes a custom logo by overwriting this exact file
+# in place (players/branding.py::CONTAINER_LOGO_PATH on the FM side) —
+# splash_logo_url itself is a fixed setting that never actually changes
+# value, so it can't tell a custom logo apart from the bundled default
+# by string comparison alone (confirmed live: a real pushed logo left
+# settings['splash_logo_url'] identical to the bundled default,
+# permanently hiding the corner credit on splash-page.html and the
+# custom mark on the dashboard navbar). The FM's push writes/removes
+# this sentinel alongside the logo file itself so navbar() has
+# something that actually reflects "is it customized right now" to
+# check.
+_CUSTOM_LOGO_MARKER_PATH = '/usr/src/app/staticfiles/img/.custom-logo'
 
 
 def navbar() -> dict[str, Any]:
@@ -43,7 +54,7 @@ def navbar() -> dict[str, Any]:
     # (differently-shaped) default splash artwork.
     splash_logo_url = settings['splash_logo_url']
     custom_nav_logo_url = (
-        splash_logo_url if splash_logo_url != _DEFAULT_SPLASH_LOGO_URL else None
+        splash_logo_url if os.path.exists(_CUSTOM_LOGO_MARKER_PATH) else None
     )
     return {
         'is_balena': is_balena_app(),
