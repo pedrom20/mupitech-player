@@ -18,3 +18,33 @@
   become: true
   roles:
     - splashscreen
+  tasks:
+    # The splashscreen role alone installs the theme + regenerates the
+    # initramfs, but never tells the kernel to actually hand off to
+    # Plymouth in graphical mode — that's normally the system role's
+    # job (cmdline.txt.j2's `splash` + `plymouth.ignore-serial-
+    # consoles` tokens), deliberately not run here (see this file's
+    # own header). Confirmed missing on a real retrofitted Pi 4: the
+    # theme was fully installed but the animation never painted
+    # because cmdline.txt had no `splash` token at all. A minimal,
+    # idempotent append here (not the system role's full template
+    # overwrite, which would also touch this device's own
+    # console=/root= arguments) is enough — mirrors the same tokens
+    # players/provision.py's SSH-provisioning flow adds for a fresh
+    # install.
+    # cmdline.txt is read directly by the bootloader/kernel at boot,
+    # not baked into the initramfs — no initramfs regen needed for
+    # this one, unlike the theme/plymouthd.conf files above.
+    - name: Enable Plymouth splash on the kernel command line
+      ansible.builtin.replace:
+        path: /boot/firmware/cmdline.txt
+        # `replace` always compiles with re.MULTILINE, so `$` also
+        # matches the empty "line" after the file's trailing newline —
+        # `.*` (zero-or-more) matched that too on a first pass, leaving
+        # a stray second line with nothing but the appended tokens.
+        # `.+` (one-or-more) requires real content, so only the actual
+        # cmdline line matches. Verified locally: a naive `.*` version
+        # of this regex left a real cmdline.txt with the tokens
+        # correctly appended AND a bogus blank-then-tokens second line.
+        regexp: '^(?!.*\bsplash\b)(.+)$'
+        replace: '\1 splash plymouth.ignore-serial-consoles'
