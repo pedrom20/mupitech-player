@@ -496,6 +496,83 @@ def _resolve_pulse_sink(audio_output: str) -> str:
     return result
 
 
+# Cards `_ensure_alsa_mixer_unmuted()` has already processed in this
+# process, so a stable resolution doesn't re-invoke amixer on every
+# play()/set_asset() call — only a card this process hasn't seen yet
+# triggers the (idempotent, but not free) unmute pass.
+_alsa_mixer_ensured: set[str] = set()
+
+
+def _extract_alsa_card_name(alsa_device: str) -> str | None:
+    """Pull the card token out of an ALSA device spec.
+
+    ``plughw:CARD=Headphones`` -> ``Headphones``,
+    ``sysdefault:CARD=vc4hdmi0`` -> ``vc4hdmi0``. Mirrors the same
+    extraction ``VideoView::resolveAlsaDevice`` does in
+    anthias_webview/src/videoview.cpp.
+    """
+    match = re.search(r'CARD=([^,]+)', alsa_device)
+    return match.group(1) if match else None
+
+
+def _ensure_alsa_mixer_unmuted(alsa_device: str) -> None:
+    """Unmute and max every simple mixer control on ``alsa_device``'s card.
+
+    Raspberry Pi's ALSA cards (the 3.5 mm jack's ``Headphones`` card,
+    the HDMI ``vc4hdmi*`` cards) can boot with a muted or 0% ``PCM`` /
+    ``Headphone`` / ``Master`` control depending on kernel/firmware
+    defaults — a silent mixer is otherwise indistinguishable from a
+    healthy pipeline, since nothing in this codebase ever calls
+    ``QAudioOutput.setVolume()``/``setMuted()`` (Qt leaves it at its own
+    default of 100%/unmuted). Control names vary across Pi models and
+    kernels, so every control the card reports via ``amixer scontrols``
+    is unmuted/maxed rather than a single hardcoded name. Best-effort:
+    a card with no controls, or a missing/failing ``amixer``, is logged
+    and skipped rather than raised — this must never block playback.
+    """
+    card = _extract_alsa_card_name(alsa_device)
+    if card is None or card in _alsa_mixer_ensured:
+        return
+    _alsa_mixer_ensured.add(card)
+
+    try:
+        completed = subprocess.run(
+            ['amixer', '-c', card, 'scontrols'],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        logger.debug(
+            'Could not list ALSA mixer controls for card %s: %s', card, exc
+        )
+        return
+
+    controls = re.findall(r"'([^']+)'", completed.stdout)
+    if not controls:
+        logger.debug('No ALSA simple mixer controls found for card %s', card)
+        return
+
+    for control in controls:
+        try:
+            subprocess.run(
+                ['amixer', '-c', card, 'sset', control, '100%', 'unmute'],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            logger.debug(
+                'Could not set ALSA mixer control %r on card %s: %s',
+                control, card, exc,
+            )
+
+    logger.info(
+        'Ensured ALSA mixer unmuted/maxed on card %s (controls: %s)',
+        card, controls,
+    )
+
+
 def get_alsa_audio_device() -> str:
     audio_output = settings['audio_output']
 
@@ -508,9 +585,14 @@ def get_alsa_audio_device() -> str:
     if os.environ.get('DEVICE_TYPE') not in ARM64_DEVICE_TYPES:
         pi_device = _pi_alsa_device(get_device_type(), audio_output)
         if pi_device is not None:
+            _ensure_alsa_mixer_unmuted(pi_device)
             return pi_device
 
     # x86 + arm64 SBCs: resolve the setting against a live pulse sink.
+    # PulseAudio manages its own per-sink volume/mute state (visible via
+    # `pactl set-sink-mute`/`set-sink-volume`, untouched by this code
+    # path and outside amixer's reach), so the ALSA-mixer-level unmute
+    # above only applies to the direct-ALSA Pi path.
     return _resolve_pulse_sink(audio_output)
 
 

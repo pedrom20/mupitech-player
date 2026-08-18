@@ -311,6 +311,7 @@ def alsa_settings() -> Iterator[Any]:
 
 
 def test_local_on_pi5_uses_detected_hdmi_device(alsa_settings: Any) -> None:
+    media_player_module._alsa_mixer_ensured = set()
     alsa_settings.__getitem__.return_value = 'local'
     with (
         patch(
@@ -320,6 +321,10 @@ def test_local_on_pi5_uses_detected_hdmi_device(alsa_settings: Any) -> None:
             'anthias_viewer.media_player._detect_hdmi_audio_device',
             return_value='sysdefault:CARD=vc4hdmi1',
         ) as mock_detect,
+        patch(
+            'anthias_viewer.media_player.subprocess.run',
+            return_value=MagicMock(stdout=''),
+        ),
     ):
         assert get_alsa_audio_device() == 'sysdefault:CARD=vc4hdmi1'
         mock_detect.assert_called_once()
@@ -329,10 +334,17 @@ def test_local_on_pi5_uses_detected_hdmi_device(alsa_settings: Any) -> None:
 def test_local_on_other_pi_uses_headphones(
     alsa_settings: Any, device_type: str
 ) -> None:
+    media_player_module._alsa_mixer_ensured = set()
     alsa_settings.__getitem__.return_value = 'local'
-    with patch(
-        'anthias_viewer.media_player.get_device_type',
-        return_value=device_type,
+    with (
+        patch(
+            'anthias_viewer.media_player.get_device_type',
+            return_value=device_type,
+        ),
+        patch(
+            'anthias_viewer.media_player.subprocess.run',
+            return_value=MagicMock(stdout=''),
+        ),
     ):
         assert get_alsa_audio_device() == 'plughw:CARD=Headphones'
 
@@ -341,6 +353,7 @@ def test_local_on_other_pi_uses_headphones(
 def test_hdmi_on_pi4_pi5_uses_detected_device(
     alsa_settings: Any, device_type: str
 ) -> None:
+    media_player_module._alsa_mixer_ensured = set()
     alsa_settings.__getitem__.return_value = 'hdmi'
     with (
         patch(
@@ -351,6 +364,10 @@ def test_hdmi_on_pi4_pi5_uses_detected_device(
             'anthias_viewer.media_player._detect_hdmi_audio_device',
             return_value='sysdefault:CARD=vc4hdmi1',
         ) as mock_detect,
+        patch(
+            'anthias_viewer.media_player.subprocess.run',
+            return_value=MagicMock(stdout=''),
+        ),
     ):
         assert get_alsa_audio_device() == 'sysdefault:CARD=vc4hdmi1'
         mock_detect.assert_called_once()
@@ -360,12 +377,128 @@ def test_hdmi_on_pi4_pi5_uses_detected_device(
 def test_hdmi_on_pi1_pi2_pi3_uses_vc4hdmi(
     alsa_settings: Any, device_type: str
 ) -> None:
+    media_player_module._alsa_mixer_ensured = set()
     alsa_settings.__getitem__.return_value = 'hdmi'
-    with patch(
-        'anthias_viewer.media_player.get_device_type',
-        return_value=device_type,
+    with (
+        patch(
+            'anthias_viewer.media_player.get_device_type',
+            return_value=device_type,
+        ),
+        patch(
+            'anthias_viewer.media_player.subprocess.run',
+            return_value=MagicMock(stdout=''),
+        ),
     ):
         assert get_alsa_audio_device() == 'sysdefault:CARD=vc4hdmi'
+
+
+def test_extract_alsa_card_name_from_plughw_spec() -> None:
+    assert (
+        media_player_module._extract_alsa_card_name(
+            'plughw:CARD=Headphones'
+        )
+        == 'Headphones'
+    )
+
+
+def test_extract_alsa_card_name_from_sysdefault_spec() -> None:
+    assert (
+        media_player_module._extract_alsa_card_name(
+            'sysdefault:CARD=vc4hdmi0'
+        )
+        == 'vc4hdmi0'
+    )
+
+
+def test_extract_alsa_card_name_returns_none_when_no_card_token() -> None:
+    assert media_player_module._extract_alsa_card_name('default') is None
+
+
+_AMIXER_SCONTROLS_OUTPUT = (
+    "Simple mixer control 'PCM',0\n"
+    "Simple mixer control 'Headphone',0\n"
+)
+
+
+def test_ensure_alsa_mixer_unmuted_unmutes_every_control() -> None:
+    media_player_module._alsa_mixer_ensured = set()
+    scontrols_result = MagicMock(stdout=_AMIXER_SCONTROLS_OUTPUT)
+    with patch(
+        'anthias_viewer.media_player.subprocess.run',
+        return_value=scontrols_result,
+    ) as mock_run:
+        media_player_module._ensure_alsa_mixer_unmuted(
+            'plughw:CARD=Headphones'
+        )
+
+    mock_run.assert_any_call(
+        ['amixer', '-c', 'Headphones', 'scontrols'],
+        capture_output=True, text=True, timeout=5,
+    )
+    mock_run.assert_any_call(
+        ['amixer', '-c', 'Headphones', 'sset', 'PCM', '100%', 'unmute'],
+        capture_output=True, text=True, timeout=5,
+    )
+    mock_run.assert_any_call(
+        ['amixer', '-c', 'Headphones', 'sset', 'Headphone', '100%', 'unmute'],
+        capture_output=True, text=True, timeout=5,
+    )
+
+
+def test_ensure_alsa_mixer_unmuted_runs_once_per_card() -> None:
+    media_player_module._alsa_mixer_ensured = set()
+    scontrols_result = MagicMock(stdout=_AMIXER_SCONTROLS_OUTPUT)
+    with patch(
+        'anthias_viewer.media_player.subprocess.run',
+        return_value=scontrols_result,
+    ) as mock_run:
+        media_player_module._ensure_alsa_mixer_unmuted(
+            'plughw:CARD=Headphones'
+        )
+        mock_run.reset_mock()
+        media_player_module._ensure_alsa_mixer_unmuted(
+            'plughw:CARD=Headphones'
+        )
+
+    mock_run.assert_not_called()
+
+
+def test_ensure_alsa_mixer_unmuted_noop_when_no_card_token() -> None:
+    media_player_module._alsa_mixer_ensured = set()
+    with patch(
+        'anthias_viewer.media_player.subprocess.run'
+    ) as mock_run:
+        media_player_module._ensure_alsa_mixer_unmuted('default')
+
+    mock_run.assert_not_called()
+
+
+def test_ensure_alsa_mixer_unmuted_survives_missing_amixer() -> None:
+    media_player_module._alsa_mixer_ensured = set()
+    with patch(
+        'anthias_viewer.media_player.subprocess.run',
+        side_effect=FileNotFoundError('amixer not found'),
+    ):
+        media_player_module._ensure_alsa_mixer_unmuted(
+            'plughw:CARD=Headphones'
+        )
+    # No assertion beyond "didn't raise" — best-effort by design.
+
+
+def test_ensure_alsa_mixer_unmuted_noop_when_no_controls_reported() -> None:
+    media_player_module._alsa_mixer_ensured = set()
+    with patch(
+        'anthias_viewer.media_player.subprocess.run',
+        return_value=MagicMock(stdout=''),
+    ) as mock_run:
+        media_player_module._ensure_alsa_mixer_unmuted(
+            'plughw:CARD=Headphones'
+        )
+
+    mock_run.assert_called_once_with(
+        ['amixer', '-c', 'Headphones', 'scontrols'],
+        capture_output=True, text=True, timeout=5,
+    )
 
 
 # Real-world `pactl list short sinks` layouts from the testbeds:
