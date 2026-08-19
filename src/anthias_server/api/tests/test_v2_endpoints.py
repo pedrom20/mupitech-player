@@ -50,6 +50,8 @@ def test_get_device_settings(
         'prefer_dark_mode': True,
         'verify_ssl': True,
         'screen_rotation': 90,
+        'footer_enabled': True,
+        'footer_messages': '["Hello", "World"]',
     }[key]
 
     response = api_client.get(device_settings_url)
@@ -73,6 +75,8 @@ def test_get_device_settings(
         'verify_ssl': True,
         'screen_rotation': 90,
         'username': '',
+        'footer_enabled': True,
+        'footer_messages': ['Hello', 'World'],
     }
 
     for key, expected_value in expected_values.items():
@@ -367,6 +371,8 @@ def test_disable_basic_auth(
         'prefer_dark_mode': False,
         'verify_ssl': True,
         'screen_rotation': 0,
+        'footer_enabled': False,
+        'footer_messages': '[]',
     }[key]
     settings_mock.__setitem__ = mock.MagicMock()
 
