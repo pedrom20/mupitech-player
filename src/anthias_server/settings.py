@@ -77,6 +77,15 @@ DEFAULTS = {
         'shuffle_playlist': False,
         'verify_ssl': True,
         'default_assets': False,
+        # Footer ticker bar (Fleet Manager's footer_messages app). Pushed
+        # by an FM deploy via PATCH /api/v2/device_settings, same channel
+        # as every other setting here. footer_messages is a JSON-encoded
+        # list of strings — configparser (this store's backing format)
+        # only holds scalars, so the list is serialised to/from JSON at
+        # the API boundary (see DeviceSettingsViewV2 in api/views/v2.py)
+        # rather than this store gaining list support just for one field.
+        'footer_enabled': False,
+        'footer_messages': '[]',
     },
 }
 CONFIGURABLE_SETTINGS = DEFAULTS['viewer'].copy()

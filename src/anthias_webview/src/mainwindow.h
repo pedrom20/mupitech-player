@@ -33,6 +33,8 @@ class MainWindow : public QMainWindow
         // them to the loaded URL's origin (scheme+host+port). Un-gated
         // (Qt5 + Qt6).
         void setRequestHeaders(const QString &headersJson);
+        // See View::setFooter — Fleet Manager's footer_messages module.
+        void setFooter(bool enabled, const QString &text);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         // libmpv-in-Qt video playback (issue #2904). Replaces the
         // external mpv subprocess MPVMediaPlayer used to launch from

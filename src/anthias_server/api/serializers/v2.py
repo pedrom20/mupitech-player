@@ -421,6 +421,8 @@ class DeviceSettingsSerializerV2(Serializer[Any]):
     # on the value being one of {0, 90, 180, 270} when reading too.
     screen_rotation = ChoiceField(choices=SCREEN_ROTATION_CHOICES)
     username = CharField()
+    footer_enabled = BooleanField()
+    footer_messages = ListField(child=CharField())
 
 
 class UpdateDeviceSettingsSerializerV2(Serializer[Any]):
@@ -464,6 +466,10 @@ class UpdateDeviceSettingsSerializerV2(Serializer[Any]):
         ],
     )
     current_password = CharField(required=False, allow_blank=True)
+    footer_enabled = BooleanField(required=False)
+    footer_messages = ListField(
+        child=CharField(max_length=500, allow_blank=True), required=False
+    )
 
     def validate_timezone(self, value: str) -> str:
         value = (value or '').strip()

@@ -250,6 +250,34 @@ def test_load_browser(viewer_fixtures: _ViewerFixtures) -> None:
     )
 
 
+def test_load_browser_queues_footer_for_fresh_webview(
+    viewer_fixtures: _ViewerFixtures, reset_footer_state: None,
+) -> None:
+    """A successful spawn must re-queue the current footer state — a
+    freshly launched AnthiasViewer always starts with the footer
+    hidden, so without this an already-enabled footer would stay
+    hidden until the next unrelated settings change (see
+    _queue_footer_for_fresh_webview's docstring)."""
+    browser_proc = viewer_fixtures.m_cmd.return_value.return_value
+    browser_proc.is_alive.return_value = True
+    _capture_out_sink(
+        viewer_fixtures, browser_proc, seed='Anthias service start\n',
+    )
+
+    with mock.patch.dict(
+        settings, {'footer_enabled': True, 'footer_messages': '["Hi"]'},
+    ):
+        viewer_fixtures.p_cmd.start()
+        viewer_fixtures.p_sleep.start()
+        try:
+            viewer_fixtures.u.load_browser()
+        finally:
+            viewer_fixtures.p_sleep.stop()
+            viewer_fixtures.p_cmd.stop()
+
+    assert viewer_fixtures.u._footer_pending == (True, 'Hi')
+
+
 def test_spawn_webview_once_raises_on_early_exit(
     viewer_fixtures: _ViewerFixtures,
 ) -> None:
@@ -2885,6 +2913,158 @@ class TestPublishDisplayResolutionOnce:
             '1280x720',
             ex=viewer.DISPLAY_RESOLUTION_TTL_S,
         )
+
+
+# ---------------------------------------------------------------------------
+# Footer ticker bar (Fleet Manager's footer_messages app)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def reset_footer_state() -> Iterator[None]:
+    """_last_applied_footer + _footer_pending are module state — snapshot
+    and restore so footer tests don't bleed into each other."""
+    prior_applied = viewer._last_applied_footer
+    prior_pending = viewer._footer_pending
+    try:
+        viewer._last_applied_footer = None
+        viewer._footer_pending = None
+        yield
+    finally:
+        viewer._last_applied_footer = prior_applied
+        viewer._footer_pending = prior_pending
+
+
+def test_current_footer_state_joins_messages(reset_footer_state: None) -> None:
+    with mock.patch.dict(
+        settings,
+        {'footer_enabled': True, 'footer_messages': '["Hello", "World"]'},
+    ):
+        assert viewer._current_footer_state() == (
+            True, 'Hello' + viewer.FOOTER_MESSAGE_SEPARATOR + 'World',
+        )
+
+
+def test_current_footer_state_survives_malformed_json(
+    reset_footer_state: None,
+) -> None:
+    with mock.patch.dict(
+        settings, {'footer_enabled': True, 'footer_messages': 'not json'},
+    ):
+        assert viewer._current_footer_state() == (True, '')
+
+
+def test_maybe_reapply_footer_queues_on_change(reset_footer_state: None) -> None:
+    with mock.patch.dict(
+        settings, {'footer_enabled': True, 'footer_messages': '["Hi"]'},
+    ):
+        viewer._maybe_reapply_footer()
+    assert viewer._last_applied_footer == (True, 'Hi')
+    assert viewer._footer_pending == (True, 'Hi')
+
+
+def test_maybe_reapply_footer_noop_when_unchanged(
+    reset_footer_state: None,
+) -> None:
+    viewer._last_applied_footer = (True, 'Hi')
+    with mock.patch.dict(
+        settings, {'footer_enabled': True, 'footer_messages': '["Hi"]'},
+    ):
+        viewer._maybe_reapply_footer()
+    # Must stay None — a repeat reload for an unrelated setting change
+    # must not re-queue (and thus re-send) an unchanged footer.
+    assert viewer._footer_pending is None
+
+
+def test_handle_reload_calls_maybe_reapply_footer(
+    reset_footer_state: None,
+) -> None:
+    with (
+        mock.patch.object(viewer, 'load_settings'),
+        mock.patch.object(viewer, '_maybe_reapply_rotation'),
+        mock.patch.object(viewer, '_maybe_reapply_dark_mode'),
+        mock.patch.object(viewer, '_maybe_reapply_footer') as reapply,
+        mock.patch.object(viewer, '_skip_if_current_asset_inactive'),
+    ):
+        viewer._handle_reload()
+    reapply.assert_called_once()
+
+
+def test_consume_pending_footer_calls_set_footer(
+    reset_footer_state: None,
+) -> None:
+    fake_bus = mock.Mock()
+    viewer._footer_pending = (True, 'Hi')
+    with mock.patch.object(viewer, 'browser_bus', fake_bus):
+        viewer._consume_pending_footer()
+    fake_bus.setFooter.assert_called_once_with(True, 'Hi')
+    assert viewer._footer_pending is None
+
+
+def test_consume_pending_footer_noop_when_nothing_pending(
+    reset_footer_state: None,
+) -> None:
+    fake_bus = mock.Mock()
+    viewer._footer_pending = None
+    with mock.patch.object(viewer, 'browser_bus', fake_bus):
+        viewer._consume_pending_footer()
+    fake_bus.setFooter.assert_not_called()
+
+
+def test_consume_pending_footer_retries_when_browser_bus_not_ready(
+    reset_footer_state: None,
+) -> None:
+    """A footer change queued before the webview has spawned must stay
+    pending rather than being dropped — the next tick (once browser_bus
+    is set) picks it back up."""
+    viewer._footer_pending = (True, 'Hi')
+    with mock.patch.object(viewer, 'browser_bus', None):
+        viewer._consume_pending_footer()
+    assert viewer._footer_pending == (True, 'Hi')
+
+
+def test_consume_pending_footer_retries_on_dbus_error(
+    reset_footer_state: None,
+) -> None:
+    fake_bus = mock.Mock()
+    fake_bus.setFooter.side_effect = RuntimeError('bus down')
+    viewer._footer_pending = (True, 'Hi')
+    with mock.patch.object(viewer, 'browser_bus', fake_bus):
+        viewer._consume_pending_footer()
+    # Still pending — a transient D-Bus failure must be retried next
+    # tick, not silently dropped.
+    assert viewer._footer_pending == (True, 'Hi')
+
+
+def test_queue_footer_for_fresh_webview_sets_pending_unconditionally(
+    reset_footer_state: None,
+) -> None:
+    """A respawned webview always starts with the footer hidden, so this
+    must re-queue even when the setting value hasn't changed since the
+    last apply (unlike _maybe_reapply_footer, which would no-op)."""
+    viewer._last_applied_footer = (True, 'Hi')
+    viewer._footer_pending = None
+    with mock.patch.dict(
+        settings, {'footer_enabled': True, 'footer_messages': '["Hi"]'},
+    ):
+        viewer._queue_footer_for_fresh_webview()
+    assert viewer._footer_pending == (True, 'Hi')
+
+
+def test_asset_loop_consumes_pending_footer(reset_rotation_state: None) -> None:
+    fake_scheduler = mock.Mock()
+    fake_scheduler.get_next_asset.return_value = None
+    skip = mock.Mock()
+    skip.wait.return_value = False
+    with (
+        mock.patch.object(viewer, '_consume_pending_rotation_bounce'),
+        mock.patch.object(viewer, '_retry_wayland_rotation_if_pending'),
+        mock.patch.object(viewer, '_consume_pending_footer') as consume,
+        mock.patch.object(viewer, 'view_image'),
+        mock.patch('anthias_viewer.get_skip_event', return_value=skip),
+    ):
+        viewer.asset_loop(fake_scheduler)
+    consume.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

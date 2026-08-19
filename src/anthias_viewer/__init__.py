@@ -148,6 +148,29 @@ _last_applied_rotation: int = 0
 # at each spawn in ``load_browser``.
 _last_applied_dark_mode: bool = False
 
+# (enabled, joined ticker text) ``_maybe_reapply_footer`` last detected
+# from settings, whether or not the main thread has applied it yet —
+# guards against the subscriber thread re-queuing the same unchanged
+# value on every ``reload`` while a slow-to-spawn webview hasn't caught
+# up (see ``_footer_pending`` below).
+_last_applied_footer: tuple[bool, str] | None = None
+
+# Cross-thread handoff for the footer bar, same reasoning as
+# ``_rotation_bounce_pending``: the subscriber thread runs
+# ``_maybe_reapply_footer`` on a ``reload``, but ``browser_bus`` is a
+# live D-Bus proxy the main asset_loop thread also calls concurrently
+# (loadPage/loadImage/playVideo) — pydbus's GLib-backed proxy isn't
+# safe to call from two threads at once. The subscriber only ever sets
+# this; ``_consume_pending_footer()`` (main thread, top of asset_loop)
+# is the sole place that actually calls ``browser_bus.setFooter()``.
+_footer_pending: tuple[bool, str] | None = None
+
+# Joins the Fleet Manager's individual footer_messages entries into the
+# single ticker string the webview scrolls — kept here (not per-entry)
+# since the C++ side has no notion of "messages", only "the text the
+# ticker currently shows".
+FOOTER_MESSAGE_SEPARATOR = '   •   '
+
 # Cross-thread handoff for the linuxfb rotation-change path. The
 # subscriber thread (ViewerSubscriber) runs _handle_reload when a
 # `reload` arrives on Redis pub/sub, but ``browser`` and
@@ -1247,6 +1270,7 @@ def load_browser(
                 attempt,
                 max_attempts,
             )
+        _queue_footer_for_fresh_webview()
         return
 
     # Every attempt failed — surface the last error (the caller, and the
@@ -1741,6 +1765,7 @@ def _handle_reload() -> None:
     load_settings()
     _maybe_reapply_rotation()
     _maybe_reapply_dark_mode()
+    _maybe_reapply_footer()
     _skip_if_current_asset_inactive()
 
 
@@ -1868,6 +1893,61 @@ def _maybe_reapply_dark_mode() -> None:
     _last_applied_dark_mode = prefer_dark
     _rotation_bounce_pending = True
     get_skip_event().set()
+
+
+def _current_footer_state() -> tuple[bool, str]:
+    """(enabled, joined ticker text) per the settings on disk right now."""
+    enabled = bool(settings['footer_enabled'])
+    try:
+        messages = json.loads(settings['footer_messages'] or '[]')
+    except (TypeError, ValueError):
+        logger.warning(
+            'Could not parse footer_messages setting as JSON; treating '
+            'as empty.'
+        )
+        messages = []
+    text = FOOTER_MESSAGE_SEPARATOR.join(messages)
+    return (enabled, text)
+
+
+def _maybe_reapply_footer() -> None:
+    """Queue a footer-bar update for the main thread when the operator
+    changed footer_enabled/footer_messages from the Fleet Manager.
+
+    Unlike rotation/dark-mode this never needs a webview respawn — the
+    footer is just a live D-Bus call (``setFooter``) the running
+    AnthiasViewer applies immediately. But that call still can't be made
+    from this subscriber thread (see ``_footer_pending``'s docstring),
+    so this only compares against the last-seen value and, on a change,
+    hands it to the main thread via ``_footer_pending`` — same handoff
+    shape as ``_rotation_bounce_pending``, minus the webview restart.
+    """
+    global _last_applied_footer, _footer_pending
+    current = _current_footer_state()
+    if current == _last_applied_footer:
+        return
+
+    logger.info('Footer settings changed: %s -> %s', _last_applied_footer, current)
+    _last_applied_footer = current
+    _footer_pending = current
+
+
+def _queue_footer_for_fresh_webview() -> None:
+    """Re-queue the current footer state after (re)spawning the webview.
+
+    ``_last_applied_footer``/``_footer_pending`` persist for the whole
+    Python viewer process, but a freshly spawned AnthiasViewer always
+    starts with the footer hidden — so a respawn triggered by something
+    unrelated (rotation change, dark-mode toggle, a crash) would
+    otherwise leave an already-enabled footer stuck hidden until the
+    next actual footer-setting change ever re-queues it. Called from
+    load_browser() right after a successful spawn, which always runs on
+    the main thread — unlike ``_maybe_reapply_footer``, this can set
+    ``_footer_pending`` unconditionally (even "unchanged") since the
+    live webview genuinely needs re-telling.
+    """
+    global _footer_pending
+    _footer_pending = _current_footer_state()
 
 
 def _retry_wayland_rotation_if_pending() -> None:
@@ -2239,6 +2319,30 @@ def _consume_pending_rotation_bounce() -> None:
     current_browser_url = None
 
 
+def _consume_pending_footer() -> None:
+    """Main-thread half of the footer handoff (see ``_footer_pending``).
+
+    Called from ``asset_loop`` at the top of each tick, right alongside
+    ``_consume_pending_rotation_bounce()``. Left pending (retried next
+    tick) rather than dropped when the webview hasn't spawned yet
+    (``browser_bus`` still None) or the D-Bus call itself fails
+    transiently — a footer change that arrives before the viewer's
+    first asset must still apply once it comes up, not be silently
+    lost.
+    """
+    global _footer_pending
+    if _footer_pending is None:
+        return
+    enabled, text = _footer_pending
+    if browser_bus is None:
+        return
+    try:
+        browser_bus.setFooter(enabled, text)
+        _footer_pending = None
+    except Exception as exc:
+        logger.debug('Transient setFooter failure (will retry next tick): %s', exc)
+
+
 def _skip_if_current_asset_inactive() -> None:
     """Cut short the current rotation if the displayed asset is gone.
 
@@ -2366,6 +2470,11 @@ def asset_loop(scheduler: Any) -> None:
     # invocation below will see browser.is_alive()==False and
     # respawn via load_browser() with the updated rotation env.
     _consume_pending_rotation_bounce()
+
+    # Footer bar changes queued by the subscriber thread — same
+    # cross-thread reasoning as the rotation bounce above, minus the
+    # webview restart (setFooter is a live, in-place D-Bus call).
+    _consume_pending_footer()
 
     # Issue #2856 — and retry the Wayland rotation if the boot-time
     # attempt in load_browser() raced cage's wayland-socket setup.

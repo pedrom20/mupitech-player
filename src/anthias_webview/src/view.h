@@ -4,11 +4,13 @@
 #include <QWebEngineView>
 #include <QAuthenticator>
 #include <QByteArray>
+#include <QLabel>
 #include <QList>
 #include <QNetworkAccessManager>
 #include <QImage>
 #include <QMovie>
 #include <QPair>
+#include <QPropertyAnimation>
 #include <QTimer>
 #include <QUrl>
 #include <QVariantMap>
@@ -41,6 +43,14 @@ public:
     // interceptor is armed when the navigation fires; the headers are
     // scoped to the loaded URL's origin (scheme+host+port) at load time.
     void setRequestHeaders(const QString &headersJson);
+    // Fleet Manager's footer_messages module — a scrolling text bar
+    // pinned to the bottom of the screen, layered above whatever asset
+    // is currently showing (image/webpage/video alike). Not gated
+    // behind QT_VERSION: unlike playVideo/stopVideo it doesn't touch
+    // QtMultimedia, so it applies identically on every board. ``enabled``
+    // with a blank/empty ``text`` is treated as disabled — no point
+    // reserving screen space for an empty bar.
+    void setFooter(bool enabled, const QString &text);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // Hands the URI + option dict to VideoView (QtMultimedia
     // QMediaPlayer rendering into a QML VideoOutput) and switches
@@ -87,6 +97,12 @@ private:
     // wedged load and retries the same URI so the device self-heals
     // once connectivity returns.
     void handlePageLoadTimeout();
+    // Footer bar geometry/animation — see the member fields' comments
+    // below for the overall design.
+    int footerBarHeight() const;
+    void refreshFooterLabelMetrics();
+    void updateFooterGeometry();
+    void tickFooterScroll();
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // Hides VideoView and re-enables the web/image surface. Called
     // by loadPage / loadImage so a switch from video back to a web
@@ -178,4 +194,32 @@ private:
     int pendingReloadIntervalS;
     void stopReloadTimer();
     void armReloadTimer();
+
+    // Footer ticker bar (setFooter). A plain QWidget/QLabel pair rather
+    // than a layout — every other visual in this class (webViews,
+    // videoView) is positioned by manual setGeometry() in resizeEvent,
+    // so this follows the same convention. footerBar is always the
+    // last-constructed (hence topmost-stacked) child, so it draws over
+    // the web/image/video surfaces without needing an explicit raise()
+    // on every asset change — playVideo() still raises it defensively
+    // after raising videoView, in case that ever changes.
+    QWidget* footerBar;
+    QLabel* footerLabel;
+    // Slides footerBar's ``geometry`` between just-below-the-visible-
+    // area (hidden) and flush with the bottom edge (visible) — see
+    // setFooter(). A single persistent animation + one connected
+    // ``finished`` handler (in the constructor), not re-created per
+    // call, so repeated show/hide cycles don't accumulate connections.
+    QPropertyAnimation* footerSlideAnimation;
+    // Marquee scroll: ticks footerLabel's x position leftward, wrapping
+    // back to footerBar's right edge once the label has fully scrolled
+    // off the left — a single repeating pass with a blank gap between
+    // loops, not a seamless double-buffered tile (fine for a first
+    // version; see setFooter()'s docstring in view.cpp).
+    QTimer* footerScrollTimer;
+    int footerScrollX;
+    // Whether the footer is currently shown (or animating in) — distinct
+    // from footerBar->isVisible(), which stays true for the whole
+    // hide animation and only flips false once it finishes.
+    bool footerEnabled = false;
 };

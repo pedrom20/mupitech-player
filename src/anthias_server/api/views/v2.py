@@ -597,6 +597,10 @@ class DeviceSettingsViewV2(APIView):
                     if settings['auth_backend'] == 'auth_basic'
                     else ''
                 ),
+                'footer_enabled': settings['footer_enabled'],
+                'footer_messages': json.loads(
+                    settings['footer_messages'] or '[]'
+                ),
             }
         )
 
@@ -674,6 +678,12 @@ class DeviceSettingsViewV2(APIView):
                 settings['verify_ssl'] = data['verify_ssl']
             if 'screen_rotation' in data:
                 settings['screen_rotation'] = int(data['screen_rotation'])
+            if 'footer_enabled' in data:
+                settings['footer_enabled'] = data['footer_enabled']
+            if 'footer_messages' in data:
+                settings['footer_messages'] = json.dumps(
+                    data['footer_messages']
+                )
 
             settings.save()
             publisher = ViewerPublisher.get_instance()

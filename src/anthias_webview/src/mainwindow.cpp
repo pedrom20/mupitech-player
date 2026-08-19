@@ -41,6 +41,11 @@ void MainWindow::setRequestHeaders(const QString &headersJson)
     view->setRequestHeaders(headersJson);
 }
 
+void MainWindow::setFooter(bool enabled, const QString &text)
+{
+    view->setFooter(enabled, text);
+}
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 void MainWindow::playVideo(const QString &uri, const QVariantMap &options)
 {
