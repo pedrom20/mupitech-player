@@ -131,8 +131,28 @@ chmod 700 "${XDG_RUNTIME_DIR}"
 # keep working unchanged on top of pulse.
 start_pulseaudio() {
     # Qt 5 boards (pi2/pi3) don't ship pulseaudio: GstFbdevMediaPlayer
-    # drives alsasink directly.
-    command -v pulseaudio > /dev/null || return 0
+    # drives alsasink directly. Every other board (pi3-64/pi4-64/pi5/
+    # x86/arm64) is Qt6 and its viewer_extra_apt_dependencies build
+    # config (tools/image_builder/utils.py) requires pulseaudio — if
+    # the binary is missing there anyway, that's an image build/publish
+    # problem, not an expected absence, and silently returning here
+    # (as this used to, unconditionally) previously let every Qt6
+    # video play silent with nothing in the log pointing at why. Loud
+    # on purpose: this exact silent-no-op is what let issue #3000's
+    # audio-missing bug go undetected in a published image whose build
+    # recipe already listed pulseaudio correctly.
+    if ! command -v pulseaudio > /dev/null; then
+        case "$DEVICE_TYPE" in
+            pi2|pi3) ;;
+            *)
+                echo "start_viewer: pulseaudio binary not found on a Qt6" \
+                    "board (DEVICE_TYPE=$DEVICE_TYPE) — video will play" \
+                    "without audio. Expected from viewer_extra_apt_dependencies;" \
+                    "check the published image build." >&2
+                ;;
+        esac
+        return 0
+    fi
 
     # PulseAudio keeps its state (auth cookie) under
     # ~viewer/.config/pulse. On upgraded devices /data/.config was
