@@ -129,6 +129,15 @@ private:
     // and paints it into footerLogoLabel once it arrives. No-ops if
     // ``url`` is blank or unchanged from what's already applied.
     void applyFooterLogo(const QString &url);
+    // The logo must only ever be on screen while the bar itself
+    // genuinely is — shown together, hidden together (including during
+    // a cycling gap, not just a real disable). footerBar->isVisible()
+    // is the correct signal for that (see its own field comment: stays
+    // true for the whole hide animation, flips false only once it
+    // finishes), not footerEnabled, which stays true throughout a
+    // cycling gap. Called wherever either side of that AND changes:
+    // a fresh pixmap arriving, or the bar's own visible/hidden flip.
+    void refreshFooterLogoVisibility();
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // Hides VideoView and re-enables the web/image surface. Called
     // by loadPage / loadImage so a switch from video back to a web
@@ -262,6 +271,14 @@ private:
     // value (every reload/settings poll re-sends the current footer
     // state, not just changes).
     QString footerLogoUrl;
+    // Whether footerLogoLabel currently holds a real (non-null) pixmap
+    // — tracked separately rather than checking footerLogoLabel->pixmap()
+    // itself, since that method's return type differs between Qt5
+    // (const QPixmap*, this codebase's Pi 1/2/3 target) and Qt6 (QPixmap
+    // by value); a plain bool works identically on both. Read by
+    // refreshFooterLogoVisibility() alongside footerBar->isVisible() —
+    // the logo only ever shows when both are true.
+    bool footerLogoHasPixmap = false;
 
     // 0 = disabled (original always-visible behavior). When positive,
     // tickFooterScroll() stops the marquee after exactly one full pass

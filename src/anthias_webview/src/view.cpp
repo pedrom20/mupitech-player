@@ -448,19 +448,17 @@ View::View(QWidget* parent) : QWidget(parent)
     footerSlideAnimation = new QPropertyAnimation(footerBar, "geometry", this);
     footerSlideAnimation->setDuration(400);
     connect(footerSlideAnimation, &QPropertyAnimation::finished, this, [this]() {
-        // Covers both directions with one persistent connection: on a
-        // show-finish footerEnabled is already true (no-op here), on a
-        // hide-finish it's false and the bar can stop being painted at
-        // all (it's already off-screen, but hiding it skips it from
-        // any future layout/paint pass entirely).
-        if (!footerEnabled) {
+        // Covers both directions with one persistent connection: a
+        // show-finish (footerEnabled true, not cycling) is a no-op
+        // here. A hide-finish — either a genuine disable (!footerEnabled)
+        // or a cycling gap just starting (footerCycling) — marks the
+        // bar (and, in lockstep, the logo) truly hidden so neither is
+        // painted at all until the next show, instead of just sitting
+        // off-screen.
+        if (!footerEnabled || footerCycling) {
             footerBar->setVisible(false);
-            return;
+            refreshFooterLogoVisibility();
         }
-        // Cycling mode's hide-out just finished — the bar is off-screen
-        // and footerCycleTimer is already ticking down (armed in
-        // tickFooterScroll before this animation started); nothing
-        // further to do here until it fires.
     });
 
     footerScrollTimer = new QTimer(this);
@@ -1320,6 +1318,17 @@ void View::updateFooterGeometry()
 
 void View::slideFooterIn()
 {
+    // footerLogoLabel's own geometry is only ever touched here and in
+    // updateFooterGeometry() — never animated in step with footerBar's
+    // slide — so it must be (re)computed against the *visible* resting
+    // position now, while footerEnabled is already true (callers set it
+    // before calling this). Without this call the logo would still be
+    // sitting wherever it was left by the *previous* updateFooterGeometry()
+    // call — the constructor's, with the bar hidden — and never move,
+    // since a fixed-resolution screen has no further resize event to
+    // ever recompute it.
+    updateFooterGeometry();
+
     const int barHeight = footerBarHeight();
     const int barWidth = width() - footerRightMargin();
     const QRect hiddenGeometry(0, height(), barWidth, barHeight);
@@ -1330,6 +1339,7 @@ void View::slideFooterIn()
     footerBar->raise();
     footerLogoLabel->raise();
     footerBar->setVisible(true);
+    refreshFooterLogoVisibility();
     footerSlideAnimation->setEasingCurve(QEasingCurve::OutCubic);
     footerSlideAnimation->setStartValue(hiddenGeometry);
     footerSlideAnimation->setEndValue(visibleGeometry);
@@ -1380,8 +1390,9 @@ void View::applyFooterLogo(const QString &url)
 {
     if (url.isEmpty()) {
         footerLogoUrl.clear();
-        footerLogoLabel->setVisible(false);
         footerLogoLabel->setPixmap(QPixmap());
+        footerLogoHasPixmap = false;
+        refreshFooterLogoVisibility();
         return;
     }
     if (url == footerLogoUrl) {
@@ -1414,8 +1425,14 @@ void View::applyFooterLogo(const QString &url)
             return;
         }
         footerLogoLabel->setPixmap(pixmap);
-        footerLogoLabel->setVisible(true);
+        footerLogoHasPixmap = true;
+        refreshFooterLogoVisibility();
     });
+}
+
+void View::refreshFooterLogoVisibility()
+{
+    footerLogoLabel->setVisible(footerBar->isVisible() && footerLogoHasPixmap);
 }
 
 void View::setFooter(
