@@ -114,14 +114,15 @@ private:
     // Right-hand gap the bar stops short of, and the top-corner radius
     // — both scale with the screen like footerBarHeight().
     int footerRightMargin() const;
+    // How far the bar's own left edge is inset from x=0 when a logo is
+    // loaded — 0 with none. Tucks just the bar's rounded corner (not
+    // the logo's whole footprint) behind the image, so the bar's dark
+    // background never sits behind most of the logo — only enough of
+    // it disappears there to read as "emerging from behind" it. See
+    // updateFooterGeometry()'s use of this for the full picture.
+    int footerBarLeftOffset() const;
     void refreshFooterLabelMetrics();
     void updateFooterGeometry();
-    // Repositions footerLogoLabel and footerTextViewport only — split
-    // out from updateFooterGeometry() (which also (re)positions
-    // footerBar itself) so applyFooterLogo() can call just this half
-    // when a pixmap arrives/clears without fighting an in-flight
-    // footerSlideAnimation of the bar.
-    void updateFooterLogoAndViewportGeometry();
     void tickFooterScroll();
     // Slides footerBar in/out (shared by setFooter's own show/hide and
     // the automatic cycle in tickFooterScroll) — factored out so both
@@ -245,16 +246,6 @@ private:
     // on every asset change — playVideo() still raises it defensively
     // after raising videoView, in case that ever changes.
     QWidget* footerBar;
-    // Clips footerLabel's scroll to the region right of the logo —
-    // a child of footerBar, sized/positioned in updateFooterGeometry()
-    // to start right where footerLogoLabel ends (0 when there's no
-    // logo). footerLabel is this widget's child (not footerBar's
-    // directly), so Qt's normal child-clipping means the marquee text
-    // is never actually painted underneath the logo's own footprint —
-    // it disappears there by geometry, not by relying on the logo
-    // image being fully opaque over its whole bounding square (many
-    // logos, including a plain round mark, have transparent corners).
-    QWidget* footerTextViewport;
     QLabel* footerLabel;
     // Slides footerBar's ``geometry`` between just-below-the-visible-
     // area (hidden) and flush with the bottom edge (visible) — see
@@ -262,13 +253,11 @@ private:
     // ``finished`` handler (in the constructor), not re-created per
     // call, so repeated show/hide cycles don't accumulate connections.
     QPropertyAnimation* footerSlideAnimation;
-    // Marquee scroll: ticks footerLabel's x position leftward (within
-    // footerTextViewport, not footerBar directly — see that field's
-    // comment), wrapping back to the viewport's right edge once the
-    // label has fully scrolled off its left — a single repeating pass
-    // with a blank gap between loops, not a seamless double-buffered
-    // tile (fine for a first version; see setFooter()'s docstring in
-    // view.cpp).
+    // Marquee scroll: ticks footerLabel's x position leftward, wrapping
+    // back to footerBar's right edge once the label has fully scrolled
+    // off the left — a single repeating pass with a blank gap between
+    // loops, not a seamless double-buffered tile (fine for a first
+    // version; see setFooter()'s docstring in view.cpp).
     QTimer* footerScrollTimer;
     int footerScrollX;
     // Whether the footer is currently shown (or animating in) — distinct
@@ -276,13 +265,14 @@ private:
     // hide animation and only flips false once it finishes.
     bool footerEnabled = false;
 
-    // Logo overlapping the bar's left edge (Fleet Manager's optional
-    // fleet-wide footer logo upload). Parented to the View itself, not
-    // footerBar — footerBar clips its children to its own geometry, and
-    // the logo is deliberately sized a bit taller than the bar so it
-    // visually "sits in front of" it rather than being flush inside it.
-    // Raised above footerBar on every update so the bar always appears
-    // to run out from behind it, never on top.
+    // Logo at the bar's left edge (Fleet Manager's optional fleet-wide
+    // footer logo upload). Parented to the View itself, not footerBar
+    // — the bar's own rect is inset to start near the logo's right
+    // edge (see footerBarLeftOffset()) rather than running underneath
+    // the whole logo, so there's no dark background behind most of
+    // the image, only immediately behind its rounded corner. The logo
+    // is sized a bit taller than the bar and raised above it so it
+    // still visually "sits in front of" that one tucked-under corner.
     QLabel* footerLogoLabel;
     // Last URL actually applied to footerLogoLabel — applyFooterLogo()
     // skips the network fetch entirely when called again with the same
@@ -294,8 +284,10 @@ private:
     // itself, since that method's return type differs between Qt5
     // (const QPixmap*, this codebase's Pi 1/2/3 target) and Qt6 (QPixmap
     // by value); a plain bool works identically on both. Read by
-    // refreshFooterLogoVisibility() alongside footerBar->isVisible() —
-    // the logo only ever shows when both are true.
+    // refreshFooterLogoVisibility() (alongside footerBar->isVisible() —
+    // the logo only ever shows when both are true) and by
+    // footerBarLeftOffset() (no logo loaded yet means nothing to inset
+    // the bar's own rect for).
     bool footerLogoHasPixmap = false;
 
     // 0 = disabled (original always-visible behavior). When positive,
