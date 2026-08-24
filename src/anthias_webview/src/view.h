@@ -116,6 +116,12 @@ private:
     int footerRightMargin() const;
     void refreshFooterLabelMetrics();
     void updateFooterGeometry();
+    // Repositions footerLogoLabel and footerTextViewport only — split
+    // out from updateFooterGeometry() (which also (re)positions
+    // footerBar itself) so applyFooterLogo() can call just this half
+    // when a pixmap arrives/clears without fighting an in-flight
+    // footerSlideAnimation of the bar.
+    void updateFooterLogoAndViewportGeometry();
     void tickFooterScroll();
     // Slides footerBar in/out (shared by setFooter's own show/hide and
     // the automatic cycle in tickFooterScroll) — factored out so both
@@ -239,6 +245,16 @@ private:
     // on every asset change — playVideo() still raises it defensively
     // after raising videoView, in case that ever changes.
     QWidget* footerBar;
+    // Clips footerLabel's scroll to the region right of the logo —
+    // a child of footerBar, sized/positioned in updateFooterGeometry()
+    // to start right where footerLogoLabel ends (0 when there's no
+    // logo). footerLabel is this widget's child (not footerBar's
+    // directly), so Qt's normal child-clipping means the marquee text
+    // is never actually painted underneath the logo's own footprint —
+    // it disappears there by geometry, not by relying on the logo
+    // image being fully opaque over its whole bounding square (many
+    // logos, including a plain round mark, have transparent corners).
+    QWidget* footerTextViewport;
     QLabel* footerLabel;
     // Slides footerBar's ``geometry`` between just-below-the-visible-
     // area (hidden) and flush with the bottom edge (visible) — see
@@ -246,11 +262,13 @@ private:
     // ``finished`` handler (in the constructor), not re-created per
     // call, so repeated show/hide cycles don't accumulate connections.
     QPropertyAnimation* footerSlideAnimation;
-    // Marquee scroll: ticks footerLabel's x position leftward, wrapping
-    // back to footerBar's right edge once the label has fully scrolled
-    // off the left — a single repeating pass with a blank gap between
-    // loops, not a seamless double-buffered tile (fine for a first
-    // version; see setFooter()'s docstring in view.cpp).
+    // Marquee scroll: ticks footerLabel's x position leftward (within
+    // footerTextViewport, not footerBar directly — see that field's
+    // comment), wrapping back to the viewport's right edge once the
+    // label has fully scrolled off its left — a single repeating pass
+    // with a blank gap between loops, not a seamless double-buffered
+    // tile (fine for a first version; see setFooter()'s docstring in
+    // view.cpp).
     QTimer* footerScrollTimer;
     int footerScrollX;
     // Whether the footer is currently shown (or animating in) — distinct

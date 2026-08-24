@@ -426,7 +426,14 @@ View::View(QWidget* parent) : QWidget(parent)
     ));
     footerBar->setVisible(false);
 
-    footerLabel = new QLabel(footerBar);
+    // Plain, unstyled child of footerBar — paints nothing of its own,
+    // just clips footerLabel (its child, not footerBar's directly) to
+    // the region right of the logo. See the field's own comment in
+    // view.h for why this exists instead of parenting footerLabel
+    // straight to footerBar.
+    footerTextViewport = new QWidget(footerBar);
+
+    footerLabel = new QLabel(footerTextViewport);
     footerLabel->setStyleSheet(QStringLiteral(
         "color: white; background: transparent;"
     ));
@@ -477,7 +484,7 @@ View::View(QWidget* parent) : QWidget(parent)
             return;
         }
         slideFooterIn();
-        footerScrollX = footerBar->width();
+        footerScrollX = footerTextViewport->width();
         footerLabel->move(footerScrollX, 0);
         footerScrollTimer->start();
     });
@@ -1304,6 +1311,14 @@ void View::updateFooterGeometry()
     footerBar->setGeometry(0, y, barWidth, barHeight);
     footerBar->raise();
     refreshFooterLabelMetrics();
+    updateFooterLogoAndViewportGeometry();
+}
+
+void View::updateFooterLogoAndViewportGeometry()
+{
+    const int barHeight = footerBarHeight();
+    const int barWidth = width() - footerRightMargin();
+    const int y = footerEnabled ? (height() - barHeight) : height();
 
     // Logo sized a bit taller/wider than the bar so it overlaps the
     // bar's top edge and reads as sitting in front of it, "behind"
@@ -1314,6 +1329,16 @@ void View::updateFooterGeometry()
     const int logoY = y + (barHeight - logoSize) / 2;
     footerLogoLabel->setGeometry(0, logoY, logoSize, logoSize);
     footerLogoLabel->raise();
+
+    // The scrolling text must never appear under the logo's own
+    // footprint — reserving that width here (rather than trusting the
+    // logo image to be fully opaque over its whole bounding square)
+    // is what makes text visually "disappear" right at the logo's
+    // edge instead of potentially peeking through a round/irregular
+    // logo's transparent corners. No logo uploaded (or not loaded
+    // yet) reserves nothing, same as before this existed.
+    const int viewportX = footerLogoHasPixmap ? logoSize : 0;
+    footerTextViewport->setGeometry(viewportX, 0, qMax(0, barWidth - viewportX), barHeight);
 }
 
 void View::slideFooterIn()
@@ -1381,7 +1406,7 @@ void View::tickFooterScroll()
             footerCycleTimer->start(footerCycleIntervalMinutes * 60000);
             return;
         }
-        footerScrollX = footerBar->width();
+        footerScrollX = footerTextViewport->width();
     }
     footerLabel->move(footerScrollX, 0);
 }
@@ -1393,6 +1418,7 @@ void View::applyFooterLogo(const QString &url)
         footerLogoLabel->setPixmap(QPixmap());
         footerLogoHasPixmap = false;
         refreshFooterLogoVisibility();
+        updateFooterLogoAndViewportGeometry();
         return;
     }
     if (url == footerLogoUrl) {
@@ -1427,6 +1453,7 @@ void View::applyFooterLogo(const QString &url)
         footerLogoLabel->setPixmap(pixmap);
         footerLogoHasPixmap = true;
         refreshFooterLogoVisibility();
+        updateFooterLogoAndViewportGeometry();
     });
 }
 
@@ -1469,7 +1496,7 @@ void View::setFooter(
         // changed while already showing) doesn't jump mid-word, but
         // no slide animation: the bar is already where it should be.
         if (shouldShow) {
-            footerScrollX = footerBar->width();
+            footerScrollX = footerTextViewport->width();
             footerLabel->move(footerScrollX, 0);
             footerScrollTimer->start();
         }
@@ -1479,7 +1506,7 @@ void View::setFooter(
 
     if (footerEnabled) {
         slideFooterIn();
-        footerScrollX = width();
+        footerScrollX = footerTextViewport->width();
         footerLabel->move(footerScrollX, 0);
         footerScrollTimer->start();
     } else {
