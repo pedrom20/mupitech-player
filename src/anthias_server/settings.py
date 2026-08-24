@@ -86,6 +86,11 @@ DEFAULTS = {
         # rather than this store gaining list support just for one field.
         'footer_enabled': False,
         'footer_messages': '[]',
+        # Fleet-wide (not per-device) footer extras, same channel as the
+        # two settings above. 0 minutes = always visible (unchanged
+        # behavior); '' logo URL = no logo shown.
+        'footer_cycle_interval_minutes': 0,
+        'footer_logo_url': '',
     },
 }
 CONFIGURABLE_SETTINGS = DEFAULTS['viewer'].copy()

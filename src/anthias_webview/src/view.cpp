@@ -20,6 +20,7 @@
 #include <QImage>
 #include <QImageReader>
 #include <QPainter>
+#include <QPixmap>
 #include <QMovie>
 #include <QBuffer>
 #include <QByteArray>
@@ -413,10 +414,15 @@ View::View(QWidget* parent) : QWidget(parent)
     // Footer ticker bar (Fleet Manager's footer_messages module). Built
     // last so it stacks above webView1/webView2/videoView by Qt's
     // default child z-order, hidden until the first setFooter(true, …).
+    // Rounded top corners + stopping short of the right edge (see
+    // footerRightMargin()) so it reads as a floating pill rather than
+    // a full-width strip flush with the screen.
     footerBar = new QWidget(this);
     footerBar->setAttribute(Qt::WA_StyledBackground, true);
     footerBar->setStyleSheet(QStringLiteral(
         "background-color: rgba(0, 0, 0, 180);"
+        "border-top-left-radius: 14px;"
+        "border-top-right-radius: 14px;"
     ));
     footerBar->setVisible(false);
 
@@ -426,6 +432,18 @@ View::View(QWidget* parent) : QWidget(parent)
     ));
     footerLabel->setWordWrap(false);
     footerLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+
+    // Optional logo (Fleet Manager's fleet-wide footer logo upload),
+    // deliberately parented to the View itself rather than footerBar:
+    // footerBar clips children to its own rect, and the logo is sized
+    // a bit taller than the bar so it visually overlaps/"sits in front
+    // of" it — see applyFooterLogo() and updateFooterGeometry(). Raised
+    // above footerBar on every geometry update so the bar always reads
+    // as running out from behind the logo, never on top of it.
+    footerLogoLabel = new QLabel(this);
+    footerLogoLabel->setStyleSheet(QStringLiteral("background: transparent;"));
+    footerLogoLabel->setScaledContents(true);
+    footerLogoLabel->setVisible(false);
 
     footerSlideAnimation = new QPropertyAnimation(footerBar, "geometry", this);
     footerSlideAnimation->setDuration(400);
@@ -437,13 +455,34 @@ View::View(QWidget* parent) : QWidget(parent)
         // any future layout/paint pass entirely).
         if (!footerEnabled) {
             footerBar->setVisible(false);
+            return;
         }
+        // Cycling mode's hide-out just finished — the bar is off-screen
+        // and footerCycleTimer is already ticking down (armed in
+        // tickFooterScroll before this animation started); nothing
+        // further to do here until it fires.
     });
 
     footerScrollTimer = new QTimer(this);
     footerScrollTimer->setInterval(20);
     connect(footerScrollTimer, &QTimer::timeout, this, &View::tickFooterScroll);
     footerScrollX = 0;
+
+    footerCycleTimer = new QTimer(this);
+    footerCycleTimer->setSingleShot(true);
+    connect(footerCycleTimer, &QTimer::timeout, this, [this]() {
+        // The interval elapsed while deliberately hidden between
+        // cycles — show again and restart the marquee from the right
+        // edge, same as a fresh setFooter(true, …) would.
+        footerCycling = false;
+        if (!footerEnabled || footerLabel->text().isEmpty()) {
+            return;
+        }
+        slideFooterIn();
+        footerScrollX = footerBar->width();
+        footerLabel->move(footerScrollX, 0);
+        footerScrollTimer->start();
+    });
 
     updateFooterGeometry();
 }
@@ -1046,9 +1085,11 @@ void View::playVideo(const QString &uri, const QVariantMap &options)
     videoView->setVisible(true);
     videoView->play(uri, options);
     // videoView->raise() above would otherwise put the video surface on
-    // top of the footer bar too — re-assert the footer's stacking order
-    // so a video asset doesn't briefly (or permanently) cover it.
+    // top of the footer bar (and its logo) too — re-assert the footer's
+    // stacking order so a video asset doesn't briefly (or permanently)
+    // cover it.
     footerBar->raise();
+    footerLogoLabel->raise();
 }
 
 void View::stopVideo()
@@ -1233,6 +1274,14 @@ int View::footerBarHeight() const
     return qBound(28, height() / 12, 72);
 }
 
+int View::footerRightMargin() const
+{
+    // Same screen-relative-with-clamp shape as footerBarHeight() — the
+    // bar stops this many px short of the right edge instead of
+    // running flush with it.
+    return qBound(12, width() / 40, 40);
+}
+
 void View::refreshFooterLabelMetrics()
 {
     const int barHeight = footerBarHeight();
@@ -1252,32 +1301,150 @@ void View::refreshFooterLabelMetrics()
 void View::updateFooterGeometry()
 {
     const int barHeight = footerBarHeight();
+    const int barWidth = width() - footerRightMargin();
     const int y = footerEnabled ? (height() - barHeight) : height();
-    footerBar->setGeometry(0, y, width(), barHeight);
+    footerBar->setGeometry(0, y, barWidth, barHeight);
     footerBar->raise();
     refreshFooterLabelMetrics();
+
+    // Logo sized a bit taller/wider than the bar so it overlaps the
+    // bar's top edge and reads as sitting in front of it, "behind"
+    // which the bar's own left edge disappears — see the constructor's
+    // comment on footerLogoLabel's parent. Moves off-screen together
+    // with the bar since its y is derived from the same ``y`` above.
+    const int logoSize = qRound(barHeight * 1.4);
+    const int logoY = y + (barHeight - logoSize) / 2;
+    footerLogoLabel->setGeometry(0, logoY, logoSize, logoSize);
+    footerLogoLabel->raise();
+}
+
+void View::slideFooterIn()
+{
+    const int barHeight = footerBarHeight();
+    const int barWidth = width() - footerRightMargin();
+    const QRect hiddenGeometry(0, height(), barWidth, barHeight);
+    const QRect visibleGeometry(0, height() - barHeight, barWidth, barHeight);
+
+    footerSlideAnimation->stop();
+    footerBar->setGeometry(hiddenGeometry);
+    footerBar->raise();
+    footerLogoLabel->raise();
+    footerBar->setVisible(true);
+    footerSlideAnimation->setEasingCurve(QEasingCurve::OutCubic);
+    footerSlideAnimation->setStartValue(hiddenGeometry);
+    footerSlideAnimation->setEndValue(visibleGeometry);
+    footerSlideAnimation->start();
+}
+
+void View::slideFooterOut()
+{
+    const int barHeight = footerBarHeight();
+    const int barWidth = width() - footerRightMargin();
+    const QRect hiddenGeometry(0, height(), barWidth, barHeight);
+
+    footerSlideAnimation->stop();
+    footerSlideAnimation->setEasingCurve(QEasingCurve::InCubic);
+    footerSlideAnimation->setStartValue(footerBar->geometry());
+    footerSlideAnimation->setEndValue(hiddenGeometry);
+    // footerBar->setVisible(false) happens in the ``finished`` handler
+    // connected once in the constructor, not here — see its comment
+    // for why a per-call connection would be wrong.
+    footerSlideAnimation->start();
 }
 
 void View::tickFooterScroll()
 {
     // Classic single-pass marquee: slide left by a couple of px per
     // tick, and once the label has fully scrolled off the left edge,
-    // restart it just past the right edge of the bar. Leaves a blank
-    // gap between passes rather than seamlessly tiling two copies of
-    // the label — simple first-version behaviour, revisit if the
-    // gap reads oddly with real message lengths.
+    // either restart it just past the right edge of the bar (default,
+    // footerCycleIntervalMinutes == 0 — continuous loop, unchanged from
+    // the original behavior) or, when a cycle interval is configured,
+    // hide the bar instead and let footerCycleTimer bring it back after
+    // that many minutes — see the constructor's footerCycleTimer
+    // connection for the reappearance half of this state machine.
     footerScrollX -= 2;
     if (footerScrollX + footerLabel->width() < 0) {
+        if (footerCycleIntervalMinutes > 0) {
+            footerScrollTimer->stop();
+            footerCycling = true;
+            slideFooterOut();
+            footerCycleTimer->start(footerCycleIntervalMinutes * 60000);
+            return;
+        }
         footerScrollX = footerBar->width();
     }
     footerLabel->move(footerScrollX, 0);
 }
 
-void View::setFooter(bool enabled, const QString &text)
+void View::applyFooterLogo(const QString &url)
+{
+    if (url.isEmpty()) {
+        footerLogoUrl.clear();
+        footerLogoLabel->setVisible(false);
+        footerLogoLabel->setPixmap(QPixmap());
+        return;
+    }
+    if (url == footerLogoUrl) {
+        // Already applied (or already in flight for this exact URL) —
+        // every reload/settings poll re-sends the current footer
+        // state wholesale, not just on an actual change, so this is
+        // the common case rather than the exception.
+        return;
+    }
+    footerLogoUrl = url;
+
+    QNetworkRequest request{QUrl(url)};
+    QNetworkReply* reply = networkManager->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, url]() {
+        reply->deleteLater();
+        // A newer applyFooterLogo() call superseded this one while the
+        // request was in flight (the logo was changed/removed again
+        // before this fetch completed) — drop the now-stale result
+        // instead of flashing an outdated image back in.
+        if (url != footerLogoUrl) {
+            return;
+        }
+        if (reply->error() != QNetworkReply::NoError) {
+            qDebug() << "Footer logo fetch failed:" << reply->errorString();
+            return;
+        }
+        QPixmap pixmap;
+        if (!pixmap.loadFromData(reply->readAll())) {
+            qDebug() << "Footer logo response was not a decodable image:" << url;
+            return;
+        }
+        footerLogoLabel->setPixmap(pixmap);
+        footerLogoLabel->setVisible(true);
+    });
+}
+
+void View::setFooter(
+    bool enabled, const QString &text,
+    int cycleIntervalMinutes, const QString &logoUrl
+)
 {
     const bool shouldShow = enabled && !text.trimmed().isEmpty();
     footerLabel->setText(text);
     refreshFooterLabelMetrics();
+    footerCycleIntervalMinutes = qMax(0, cycleIntervalMinutes);
+    applyFooterLogo(logoUrl);
+
+    if (footerCycling) {
+        // Deliberately hidden between cycles right now — text/logo/
+        // interval are already updated above for whichever content is
+        // showing next, but a routine settings refresh arriving mid-
+        // gap must not itself force an early reappearance or otherwise
+        // disturb a wait already in progress.
+        footerEnabled = shouldShow;
+        if (!footerEnabled) {
+            // Nothing left to show at all — cancel the pending
+            // reappearance outright rather than popping up an empty
+            // bar later.
+            footerCycleTimer->stop();
+            footerCycling = false;
+        }
+        return;
+    }
 
     if (shouldShow == footerEnabled) {
         // Same on/off state as before — still worth restarting the
@@ -1293,30 +1460,13 @@ void View::setFooter(bool enabled, const QString &text)
     }
     footerEnabled = shouldShow;
 
-    const int barHeight = footerBarHeight();
-    const QRect hiddenGeometry(0, height(), width(), barHeight);
-    const QRect visibleGeometry(0, height() - barHeight, width(), barHeight);
-
-    footerSlideAnimation->stop();
     if (footerEnabled) {
-        footerBar->setGeometry(hiddenGeometry);
-        footerBar->raise();
-        footerBar->setVisible(true);
+        slideFooterIn();
         footerScrollX = width();
         footerLabel->move(footerScrollX, 0);
-        footerSlideAnimation->setEasingCurve(QEasingCurve::OutCubic);
-        footerSlideAnimation->setStartValue(hiddenGeometry);
-        footerSlideAnimation->setEndValue(visibleGeometry);
-        footerSlideAnimation->start();
         footerScrollTimer->start();
     } else {
         footerScrollTimer->stop();
-        footerSlideAnimation->setEasingCurve(QEasingCurve::InCubic);
-        footerSlideAnimation->setStartValue(footerBar->geometry());
-        footerSlideAnimation->setEndValue(hiddenGeometry);
-        // footerBar->setVisible(false) happens in the ``finished``
-        // handler connected once in the constructor, not here — see
-        // its comment for why a per-call connection would be wrong.
-        footerSlideAnimation->start();
+        slideFooterOut();
     }
 }

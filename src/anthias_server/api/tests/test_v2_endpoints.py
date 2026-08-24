@@ -52,6 +52,8 @@ def test_get_device_settings(
         'screen_rotation': 90,
         'footer_enabled': True,
         'footer_messages': '["Hello", "World"]',
+        'footer_cycle_interval_minutes': 5,
+        'footer_logo_url': 'https://fm.example.com/media/footer/footer-logo.png',
     }[key]
 
     response = api_client.get(device_settings_url)
@@ -77,6 +79,8 @@ def test_get_device_settings(
         'username': '',
         'footer_enabled': True,
         'footer_messages': ['Hello', 'World'],
+        'footer_cycle_interval_minutes': 5,
+        'footer_logo_url': 'https://fm.example.com/media/footer/footer-logo.png',
     }
 
     for key, expected_value in expected_values.items():
@@ -373,6 +377,8 @@ def test_disable_basic_auth(
         'screen_rotation': 0,
         'footer_enabled': False,
         'footer_messages': '[]',
+        'footer_cycle_interval_minutes': 0,
+        'footer_logo_url': '',
     }[key]
     settings_mock.__setitem__ = mock.MagicMock()
 

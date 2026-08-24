@@ -41,9 +41,12 @@ void MainWindow::setRequestHeaders(const QString &headersJson)
     view->setRequestHeaders(headersJson);
 }
 
-void MainWindow::setFooter(bool enabled, const QString &text)
+void MainWindow::setFooter(
+    bool enabled, const QString &text,
+    int cycleIntervalMinutes, const QString &logoUrl
+)
 {
-    view->setFooter(enabled, text);
+    view->setFooter(enabled, text, cycleIntervalMinutes, logoUrl);
 }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)

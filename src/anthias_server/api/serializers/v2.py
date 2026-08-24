@@ -423,6 +423,8 @@ class DeviceSettingsSerializerV2(Serializer[Any]):
     username = CharField()
     footer_enabled = BooleanField()
     footer_messages = ListField(child=CharField())
+    footer_cycle_interval_minutes = IntegerField()
+    footer_logo_url = CharField()
 
 
 class UpdateDeviceSettingsSerializerV2(Serializer[Any]):
@@ -470,6 +472,8 @@ class UpdateDeviceSettingsSerializerV2(Serializer[Any]):
     footer_messages = ListField(
         child=CharField(max_length=500, allow_blank=True), required=False
     )
+    footer_cycle_interval_minutes = IntegerField(required=False, min_value=0)
+    footer_logo_url = CharField(required=False, allow_blank=True)
 
     def validate_timezone(self, value: str) -> str:
         value = (value or '').strip()

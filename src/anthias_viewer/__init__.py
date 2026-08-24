@@ -148,12 +148,13 @@ _last_applied_rotation: int = 0
 # at each spawn in ``load_browser``.
 _last_applied_dark_mode: bool = False
 
-# (enabled, joined ticker text) ``_maybe_reapply_footer`` last detected
-# from settings, whether or not the main thread has applied it yet —
-# guards against the subscriber thread re-queuing the same unchanged
-# value on every ``reload`` while a slow-to-spawn webview hasn't caught
-# up (see ``_footer_pending`` below).
-_last_applied_footer: tuple[bool, str] | None = None
+# (enabled, joined ticker text, cycle interval minutes, logo URL)
+# ``_maybe_reapply_footer`` last detected from settings, whether or not
+# the main thread has applied it yet — guards against the subscriber
+# thread re-queuing the same unchanged value on every ``reload`` while
+# a slow-to-spawn webview hasn't caught up (see ``_footer_pending``
+# below).
+_last_applied_footer: tuple[bool, str, int, str] | None = None
 
 # Cross-thread handoff for the footer bar, same reasoning as
 # ``_rotation_bounce_pending``: the subscriber thread runs
@@ -163,7 +164,7 @@ _last_applied_footer: tuple[bool, str] | None = None
 # safe to call from two threads at once. The subscriber only ever sets
 # this; ``_consume_pending_footer()`` (main thread, top of asset_loop)
 # is the sole place that actually calls ``browser_bus.setFooter()``.
-_footer_pending: tuple[bool, str] | None = None
+_footer_pending: tuple[bool, str, int, str] | None = None
 
 # Joins the Fleet Manager's individual footer_messages entries into the
 # single ticker string the webview scrolls — kept here (not per-entry)
@@ -1895,8 +1896,9 @@ def _maybe_reapply_dark_mode() -> None:
     get_skip_event().set()
 
 
-def _current_footer_state() -> tuple[bool, str]:
-    """(enabled, joined ticker text) per the settings on disk right now."""
+def _current_footer_state() -> tuple[bool, str, int, str]:
+    """(enabled, joined ticker text, cycle interval minutes, logo URL)
+    per the settings on disk right now."""
     enabled = bool(settings['footer_enabled'])
     try:
         messages = json.loads(settings['footer_messages'] or '[]')
@@ -1907,7 +1909,9 @@ def _current_footer_state() -> tuple[bool, str]:
         )
         messages = []
     text = FOOTER_MESSAGE_SEPARATOR.join(messages)
-    return (enabled, text)
+    cycle_interval_minutes = int(settings['footer_cycle_interval_minutes'] or 0)
+    logo_url = settings['footer_logo_url'] or ''
+    return (enabled, text, cycle_interval_minutes, logo_url)
 
 
 def _maybe_reapply_footer() -> None:
@@ -2333,11 +2337,11 @@ def _consume_pending_footer() -> None:
     global _footer_pending
     if _footer_pending is None:
         return
-    enabled, text = _footer_pending
+    enabled, text, cycle_interval_minutes, logo_url = _footer_pending
     if browser_bus is None:
         return
     try:
-        browser_bus.setFooter(enabled, text)
+        browser_bus.setFooter(enabled, text, cycle_interval_minutes, logo_url)
         _footer_pending = None
     except Exception as exc:
         logger.debug('Transient setFooter failure (will retry next tick): %s', exc)

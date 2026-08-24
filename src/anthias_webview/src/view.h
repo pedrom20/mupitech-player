@@ -50,7 +50,18 @@ public:
     // QtMultimedia, so it applies identically on every board. ``enabled``
     // with a blank/empty ``text`` is treated as disabled — no point
     // reserving screen space for an empty bar.
-    void setFooter(bool enabled, const QString &text);
+    //
+    // ``cycleIntervalMinutes`` (0 = disabled, the original always-on
+    // behavior) makes the bar hide itself after one full marquee pass
+    // and reappear ``cycleIntervalMinutes`` minutes later, repeating —
+    // see tickFooterScroll()'s docstring in view.cpp for the state
+    // machine. ``logoUrl`` (absolute HTTP(S) URL, or empty for none) is
+    // fetched and painted at the bar's left edge, overlapping it — see
+    // applyFooterLogo().
+    void setFooter(
+        bool enabled, const QString &text,
+        int cycleIntervalMinutes, const QString &logoUrl
+    );
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // Hands the URI + option dict to VideoView (QtMultimedia
     // QMediaPlayer rendering into a QML VideoOutput) and switches
@@ -100,9 +111,24 @@ private:
     // Footer bar geometry/animation — see the member fields' comments
     // below for the overall design.
     int footerBarHeight() const;
+    // Right-hand gap the bar stops short of, and the top-corner radius
+    // — both scale with the screen like footerBarHeight().
+    int footerRightMargin() const;
     void refreshFooterLabelMetrics();
     void updateFooterGeometry();
     void tickFooterScroll();
+    // Slides footerBar in/out (shared by setFooter's own show/hide and
+    // the automatic cycle in tickFooterScroll) — factored out so both
+    // call sites stay in sync instead of hand-rolling the same
+    // QPropertyAnimation setup twice.
+    void slideFooterIn();
+    void slideFooterOut();
+    // Fetches ``url`` (a plain QNetworkAccessManager::get(), independent
+    // of the content-asset loadImage() pipeline — no SSL-verify opt-out
+    // or animated-GIF handling needed for a small fixed badge image)
+    // and paints it into footerLogoLabel once it arrives. No-ops if
+    // ``url`` is blank or unchanged from what's already applied.
+    void applyFooterLogo(const QString &url);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // Hides VideoView and re-enables the web/image surface. Called
     // by loadPage / loadImage so a switch from video back to a web
@@ -222,4 +248,34 @@ private:
     // from footerBar->isVisible(), which stays true for the whole
     // hide animation and only flips false once it finishes.
     bool footerEnabled = false;
+
+    // Logo overlapping the bar's left edge (Fleet Manager's optional
+    // fleet-wide footer logo upload). Parented to the View itself, not
+    // footerBar — footerBar clips its children to its own geometry, and
+    // the logo is deliberately sized a bit taller than the bar so it
+    // visually "sits in front of" it rather than being flush inside it.
+    // Raised above footerBar on every update so the bar always appears
+    // to run out from behind it, never on top.
+    QLabel* footerLogoLabel;
+    // Last URL actually applied to footerLogoLabel — applyFooterLogo()
+    // skips the network fetch entirely when called again with the same
+    // value (every reload/settings poll re-sends the current footer
+    // state, not just changes).
+    QString footerLogoUrl;
+
+    // 0 = disabled (original always-visible behavior). When positive,
+    // tickFooterScroll() stops the marquee after exactly one full pass
+    // instead of wrapping, slides the bar out, and footerCycleTimer
+    // (below) re-shows it after this many minutes.
+    int footerCycleIntervalMinutes = 0;
+    // Singleshot; armed in tickFooterScroll() when a cycle's visible
+    // pass finishes, consumed by its own timeout handler which slides
+    // the bar back in and restarts the scroll from the right edge.
+    QTimer* footerCycleTimer;
+    // True only during the deliberate "hidden between cycles" gap —
+    // distinct from !footerEnabled (no messages at all): a change to
+    // footer content while cycling is still honored on the *next*
+    // show, but a bare interval change must never itself interrupt a
+    // pass already in progress.
+    bool footerCycling = false;
 };

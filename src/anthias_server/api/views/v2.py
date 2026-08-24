@@ -601,6 +601,10 @@ class DeviceSettingsViewV2(APIView):
                 'footer_messages': json.loads(
                     settings['footer_messages'] or '[]'
                 ),
+                'footer_cycle_interval_minutes': settings[
+                    'footer_cycle_interval_minutes'
+                ],
+                'footer_logo_url': settings['footer_logo_url'],
             }
         )
 
@@ -684,6 +688,12 @@ class DeviceSettingsViewV2(APIView):
                 settings['footer_messages'] = json.dumps(
                     data['footer_messages']
                 )
+            if 'footer_cycle_interval_minutes' in data:
+                settings['footer_cycle_interval_minutes'] = data[
+                    'footer_cycle_interval_minutes'
+                ]
+            if 'footer_logo_url' in data:
+                settings['footer_logo_url'] = data['footer_logo_url']
 
             settings.save()
             publisher = ViewerPublisher.get_instance()
