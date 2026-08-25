@@ -132,6 +132,13 @@ private:
     void refreshFooterLabelMetrics();
     void updateFooterGeometry();
     void tickFooterScroll();
+    // Moves footerLabel to footerScrollX, translated into
+    // footerTextClip's local coordinate space (offset left by
+    // footerTextLeftMargin()) — every footerScrollX assignment must
+    // route through this rather than footerLabel->move() directly, or
+    // the text reappears flush with the bar's true left edge instead
+    // of clipped footerTextLeftMargin() short of it.
+    void positionFooterLabel();
     // Slides footerBar in/out (shared by setFooter's own show/hide and
     // the automatic cycle in tickFooterScroll) — factored out so both
     // call sites stay in sync instead of hand-rolling the same
@@ -254,6 +261,18 @@ private:
     // on every asset change — playVideo() still raises it defensively
     // after raising videoView, in case that ever changes.
     QWidget* footerBar;
+    // Child of footerBar, parent of footerLabel — exists purely to clip
+    // the marquee text at footerTextLeftMargin() px in from footerBar's
+    // own left edge (Qt clips a child's painting to its own parent's
+    // rect, so without this intermediate widget footerLabel would clip
+    // at footerBar's edge, x=0, same as before footerTextLeftMargin()
+    // existed). No stylesheet/background of its own — it must stay
+    // invisible as a shape, or it reads as yet another bar-like strip
+    // the way footerTextViewport once did before that whole approach
+    // was replaced by insetting footerBar itself (see
+    // footerBarLeftOffset()). Resized alongside footerBar in
+    // updateFooterGeometry().
+    QWidget* footerTextClip;
     QLabel* footerLabel;
     // Slides footerBar's ``geometry`` between just-below-the-visible-
     // area (hidden) and flush with the bottom edge (visible) — see

@@ -437,7 +437,8 @@ View::View(QWidget* parent) : QWidget(parent)
     ).arg(kFooterBarCornerRadiusPx));
     footerBar->setVisible(false);
 
-    footerLabel = new QLabel(footerBar);
+    footerTextClip = new QWidget(footerBar);
+    footerLabel = new QLabel(footerTextClip);
     footerLabel->setStyleSheet(QStringLiteral(
         "color: white; background: transparent;"
     ));
@@ -488,7 +489,7 @@ View::View(QWidget* parent) : QWidget(parent)
         }
         slideFooterIn();
         footerScrollX = footerBar->width();
-        footerLabel->move(footerScrollX, 0);
+        positionFooterLabel();
         footerScrollTimer->start();
     });
 
@@ -1341,6 +1342,14 @@ void View::updateFooterGeometry()
     footerBar->raise();
     refreshFooterLabelMetrics();
 
+    // See footerTextClip's member comment in view.h — clips the
+    // marquee text footerTextLeftMargin() px short of footerBar's own
+    // (bar-local) left edge instead of flush with it.
+    const int textMargin = footerTextLeftMargin();
+    footerTextClip->setGeometry(
+        textMargin, 0, qMax(0, barWidth - textMargin), barHeight
+    );
+
     // Logo sized a bit taller than the bar so it overlaps the bar's
     // top edge and reads as sitting in front of it — see the
     // constructor's comment on footerLogoLabel's parent. Always at
@@ -1403,6 +1412,11 @@ void View::slideFooterOut()
     footerSlideAnimation->start();
 }
 
+void View::positionFooterLabel()
+{
+    footerLabel->move(footerScrollX - footerTextLeftMargin(), 0);
+}
+
 void View::tickFooterScroll()
 {
     // Classic single-pass marquee: slide left by a couple of px per
@@ -1426,7 +1440,7 @@ void View::tickFooterScroll()
         }
         footerScrollX = footerBar->width();
     }
-    footerLabel->move(footerScrollX, 0);
+    positionFooterLabel();
 }
 
 void View::applyFooterLogo(const QString &url)
@@ -1515,7 +1529,7 @@ void View::setFooter(
         // no slide animation: the bar is already where it should be.
         if (shouldShow) {
             footerScrollX = footerBar->width();
-            footerLabel->move(footerScrollX, 0);
+            positionFooterLabel();
             footerScrollTimer->start();
         }
         return;
@@ -1525,7 +1539,7 @@ void View::setFooter(
     if (footerEnabled) {
         slideFooterIn();
         footerScrollX = footerBar->width();
-        footerLabel->move(footerScrollX, 0);
+        positionFooterLabel();
         footerScrollTimer->start();
     } else {
         footerScrollTimer->stop();
