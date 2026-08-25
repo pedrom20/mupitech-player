@@ -121,6 +121,14 @@ private:
     // it disappears there to read as "emerging from behind" it. See
     // updateFooterGeometry()'s use of this for the full picture.
     int footerBarLeftOffset() const;
+    // Extra gap the scrolling text stops short of the bar's own left
+    // edge by, before wrapping/hiding — without this the marquee would
+    // scroll every last pixel of a line out at the bar's true x=0,
+    // which (now that the bar's left edge itself sits tucked right up
+    // against the image, see footerBarLeftOffset()) reads as text
+    // butting straight up against the logo instead of trailing off
+    // behind it with some visual breathing room first.
+    int footerTextLeftMargin() const;
     void refreshFooterLabelMetrics();
     void updateFooterGeometry();
     void tickFooterScroll();

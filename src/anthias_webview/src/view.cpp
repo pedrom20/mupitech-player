@@ -1303,6 +1303,18 @@ int View::footerBarLeftOffset() const
     return qMax(0, logoSize - kFooterBarCornerRadiusPx);
 }
 
+int View::footerTextLeftMargin() const
+{
+    if (!footerLogoHasPixmap) {
+        return 0;
+    }
+    // No real physical DPI available here to target an exact "~1.5cm"
+    // (how the gap was actually specified) — scales the same
+    // screen-relative-with-clamp way as the other footer margins,
+    // landing in roughly that range on typical signage displays.
+    return qBound(24, width() / 48, 60);
+}
+
 void View::refreshFooterLabelMetrics()
 {
     const int barHeight = footerBarHeight();
@@ -1394,15 +1406,17 @@ void View::slideFooterOut()
 void View::tickFooterScroll()
 {
     // Classic single-pass marquee: slide left by a couple of px per
-    // tick, and once the label has fully scrolled off the left edge,
-    // either restart it just past the right edge of the bar (default,
+    // tick, and once the label has scrolled off (stopping
+    // footerTextLeftMargin() short of the bar's true left edge, not
+    // all the way to it — see that method), either restart it just
+    // past the right edge of the bar (default,
     // footerCycleIntervalMinutes == 0 — continuous loop, unchanged from
     // the original behavior) or, when a cycle interval is configured,
     // hide the bar instead and let footerCycleTimer bring it back after
     // that many minutes — see the constructor's footerCycleTimer
     // connection for the reappearance half of this state machine.
     footerScrollX -= 2;
-    if (footerScrollX + footerLabel->width() < 0) {
+    if (footerScrollX + footerLabel->width() < footerTextLeftMargin()) {
         if (footerCycleIntervalMinutes > 0) {
             footerScrollTimer->stop();
             footerCycling = true;
