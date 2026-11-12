@@ -66,6 +66,17 @@ public:
         bool enabled, const QString &text,
         int cycleIntervalMinutes, const QString &logoUrl
     );
+    // Device setting transition_duration_ms (api/views/v2.py's
+    // DeviceSettingsViewV2) — how long fadeAnimation/crossfadeAnimation
+    // each take, in milliseconds. Re-clamped here too (DRF already
+    // bounds it to [0, 2000] — see UpdateDeviceSettingsSerializerV2 —
+    // but this is callable from anywhere a View exists, not only
+    // through that one validated path) — same "never trust a single
+    // layer" spirit as clamp_screen_rotation/clamp_duration on the
+    // Python side. 0 means instant (no animation at all): both
+    // animations simply jump straight to their end value in zero time,
+    // not a divide-by-zero or a stuck transition.
+    void setTransitionDuration(int ms);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // Hands the URI + option dict to VideoView (QtMultimedia
     // QMediaPlayer rendering into a QML VideoOutput) and switches

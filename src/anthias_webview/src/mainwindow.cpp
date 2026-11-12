@@ -49,6 +49,11 @@ void MainWindow::setFooter(
     view->setFooter(enabled, text, cycleIntervalMinutes, logoUrl);
 }
 
+void MainWindow::setTransitionDuration(int ms)
+{
+    view->setTransitionDuration(ms);
+}
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 void MainWindow::playVideo(const QString &uri, const QVariantMap &options)
 {

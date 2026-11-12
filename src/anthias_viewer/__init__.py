@@ -166,6 +166,15 @@ _last_applied_footer: tuple[bool, str, int, str] | None = None
 # is the sole place that actually calls ``browser_bus.setFooter()``.
 _footer_pending: tuple[bool, str, int, str] | None = None
 
+# Same shape as _last_applied_footer/_footer_pending above, but for the
+# single transition_duration_ms setting (fade-through-black /
+# image-image crossfade duration — view.cpp's fadeAnimation /
+# crossfadeAnimation). Default matches both animations' own hardcoded
+# constructor value, so nothing looks "changed" before the first
+# settings read actually happens to disagree.
+_last_applied_transition_duration_ms: int = 200
+_transition_duration_pending: int | None = None
+
 # Joins the Fleet Manager's individual footer_messages entries into the
 # single ticker string the webview scrolls — kept here (not per-entry)
 # since the C++ side has no notion of "messages", only "the text the
@@ -1272,6 +1281,7 @@ def load_browser(
                 max_attempts,
             )
         _queue_footer_for_fresh_webview()
+        _queue_transition_duration_for_fresh_webview()
         return
 
     # Every attempt failed — surface the last error (the caller, and the
@@ -1767,6 +1777,7 @@ def _handle_reload() -> None:
     _maybe_reapply_rotation()
     _maybe_reapply_dark_mode()
     _maybe_reapply_footer()
+    _maybe_reapply_transition_duration()
     _skip_if_current_asset_inactive()
 
 
@@ -1952,6 +1963,37 @@ def _queue_footer_for_fresh_webview() -> None:
     """
     global _footer_pending
     _footer_pending = _current_footer_state()
+
+
+def _maybe_reapply_transition_duration() -> None:
+    """Queue a transition-duration update for the main thread when the
+    operator changed it from the Fleet Manager — same live-D-Bus,
+    no-respawn-needed shape as ``_maybe_reapply_footer`` above, just for
+    a single int instead of the footer's 4-tuple."""
+    global _last_applied_transition_duration_ms, _transition_duration_pending
+    try:
+        current = int(settings['transition_duration_ms'])
+    except (TypeError, ValueError):
+        current = _last_applied_transition_duration_ms
+    if current == _last_applied_transition_duration_ms:
+        return
+
+    logger.info(
+        'Transition duration changed: %s -> %s',
+        _last_applied_transition_duration_ms, current,
+    )
+    _last_applied_transition_duration_ms = current
+    _transition_duration_pending = current
+
+
+def _queue_transition_duration_for_fresh_webview() -> None:
+    """Re-queue the current transition duration after (re)spawning the
+    webview — mirrors ``_queue_footer_for_fresh_webview``: a fresh View
+    always starts from its own hardcoded constructor default, not
+    necessarily what the operator configured, so this re-tells it
+    unconditionally rather than waiting for the value to next change."""
+    global _transition_duration_pending
+    _transition_duration_pending = _last_applied_transition_duration_ms
 
 
 def _retry_wayland_rotation_if_pending() -> None:
@@ -2347,6 +2389,26 @@ def _consume_pending_footer() -> None:
         logger.debug('Transient setFooter failure (will retry next tick): %s', exc)
 
 
+def _consume_pending_transition_duration() -> None:
+    """Main-thread half of the transition-duration handoff — mirrors
+    ``_consume_pending_footer`` above, including leaving the value
+    pending (retried next tick) rather than dropped on a transient
+    failure or while the webview hasn't spawned yet."""
+    global _transition_duration_pending
+    if _transition_duration_pending is None:
+        return
+    if browser_bus is None:
+        return
+    try:
+        browser_bus.setTransitionDuration(_transition_duration_pending)
+        _transition_duration_pending = None
+    except Exception as exc:
+        logger.debug(
+            'Transient setTransitionDuration failure (will retry next tick): %s',
+            exc,
+        )
+
+
 def _skip_if_current_asset_inactive() -> None:
     """Cut short the current rotation if the displayed asset is gone.
 
@@ -2479,6 +2541,7 @@ def asset_loop(scheduler: Any) -> None:
     # cross-thread reasoning as the rotation bounce above, minus the
     # webview restart (setFooter is a live, in-place D-Bus call).
     _consume_pending_footer()
+    _consume_pending_transition_duration()
 
     # Issue #2856 — and retry the Wayland rotation if the boot-time
     # attempt in load_browser() raced cage's wayland-socket setup.

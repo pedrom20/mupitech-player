@@ -425,6 +425,7 @@ class DeviceSettingsSerializerV2(Serializer[Any]):
     footer_messages = ListField(child=CharField())
     footer_cycle_interval_minutes = IntegerField()
     footer_logo_url = CharField()
+    transition_duration_ms = IntegerField()
 
 
 class UpdateDeviceSettingsSerializerV2(Serializer[Any]):
@@ -474,6 +475,14 @@ class UpdateDeviceSettingsSerializerV2(Serializer[Any]):
     )
     footer_cycle_interval_minutes = IntegerField(required=False, min_value=0)
     footer_logo_url = CharField(required=False, allow_blank=True)
+    # Bounded the same spirit as default_duration above — a poisoned
+    # value shouldn't be able to make every transition absurdly slow
+    # (or, at 0, instant/disabled) in a way the viewer can't recover
+    # from without another settings push. See view.cpp's fadeAnimation/
+    # crossfadeAnimation for where this lands.
+    transition_duration_ms = IntegerField(
+        required=False, min_value=0, max_value=2000
+    )
 
     def validate_timezone(self, value: str) -> str:
         value = (value or '').strip()

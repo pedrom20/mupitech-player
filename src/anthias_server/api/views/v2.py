@@ -605,6 +605,9 @@ class DeviceSettingsViewV2(APIView):
                     'footer_cycle_interval_minutes'
                 ],
                 'footer_logo_url': settings['footer_logo_url'],
+                'transition_duration_ms': int(
+                    settings['transition_duration_ms']
+                ),
             }
         )
 
@@ -694,6 +697,10 @@ class DeviceSettingsViewV2(APIView):
                 ]
             if 'footer_logo_url' in data:
                 settings['footer_logo_url'] = data['footer_logo_url']
+            if 'transition_duration_ms' in data:
+                settings['transition_duration_ms'] = data[
+                    'transition_duration_ms'
+                ]
 
             settings.save()
             publisher = ViewerPublisher.get_instance()

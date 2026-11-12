@@ -91,6 +91,11 @@ DEFAULTS = {
         # behavior); '' logo URL = no logo shown.
         'footer_cycle_interval_minutes': 0,
         'footer_logo_url': '',
+        # Fade-through-black / image-image crossfade duration between
+        # asset switches (src/anthias_webview/src/view.cpp — fadeAnimation
+        # / crossfadeAnimation), in milliseconds. Same FM-pushed channel
+        # as the footer settings above (PATCH /api/v2/device_settings).
+        'transition_duration_ms': 200,
     },
 }
 CONFIGURABLE_SETTINGS = DEFAULTS['viewer'].copy()

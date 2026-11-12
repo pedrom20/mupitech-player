@@ -38,6 +38,10 @@ class MainWindow : public QMainWindow
             bool enabled, const QString &text,
             int cycleIntervalMinutes, const QString &logoUrl
         );
+        // See View::setTransitionDuration — device setting
+        // transition_duration_ms, pushed the same way as the footer
+        // settings above (PATCH /api/v2/device_settings).
+        void setTransitionDuration(int ms);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         // libmpv-in-Qt video playback (issue #2904). Replaces the
         // external mpv subprocess MPVMediaPlayer used to launch from

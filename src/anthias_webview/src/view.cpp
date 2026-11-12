@@ -441,7 +441,12 @@ View::View(QWidget* parent) : QWidget(parent)
     // crossfadeProgress is a plain qreal member, not a Q_PROPERTY on
     // some QObject to bind to.
     crossfadeAnimation = new QVariantAnimation(this);
-    crossfadeAnimation->setDuration(250);
+    // Same default as fadeAnimation above (both ultimately get moved
+    // together by setTransitionDuration() once a settings read lands
+    // anyway) — kept equal rather than a different hardcoded number so
+    // there's no brief, pointless mismatch between the two before that
+    // first sync.
+    crossfadeAnimation->setDuration(200);
     crossfadeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
     connect(crossfadeAnimation, &QVariantAnimation::valueChanged,
             this, [this](const QVariant &value) {
@@ -1708,4 +1713,11 @@ void View::setFooter(
         footerScrollTimer->stop();
         slideFooterOut();
     }
+}
+
+void View::setTransitionDuration(int ms)
+{
+    const int clamped = qBound(0, ms, 2000);
+    fadeAnimation->setDuration(clamped);
+    crossfadeAnimation->setDuration(clamped);
 }
