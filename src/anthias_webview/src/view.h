@@ -4,6 +4,7 @@
 #include <QWebEngineView>
 #include <QAuthenticator>
 #include <QByteArray>
+#include <QGraphicsOpacityEffect>
 #include <QLabel>
 #include <QList>
 #include <QNetworkAccessManager>
@@ -14,6 +15,7 @@
 #include <QTimer>
 #include <QUrl>
 #include <QVariantMap>
+#include <functional>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include "videoview.h"
@@ -92,6 +94,22 @@ private slots:
 private:
     void configureWebView(QWebEngineView* view);
     void stopAnimation();
+    // Fade-through-black between one asset's content and the next —
+    // see fadeOverlay's own comment for why this is a solid black
+    // widget fading in/out rather than a true crossfade of two live
+    // surfaces. ``swapContent`` runs at the exact moment the screen is
+    // fully black (fade-out finished), so it's always safe for it to
+    // mutate currentImage / start a QMovie / flip webview visibility —
+    // nothing is on screen to flicker. Call sites must only invoke this
+    // once the new content is already fully ready (decoded image data
+    // in hand, page already loaded) — never to bridge a network wait,
+    // or the screen would sit black for however long that takes.
+    void fadeToContent(std::function<void()> swapContent);
+    // Single persistent QPropertyAnimation's finished handler (see
+    // fadeAnimation's own comment) — advances fadePhase from FadingOut
+    // to FadingIn (running the queued swapContent then reversing the
+    // animation) or back to Idle.
+    void onFadeAnimationFinished();
     bool tryLoadAsAnimatedGif(const QByteArray& data);
     void loadAsStaticImage(const QByteArray& data);
     void setupAnimation();
@@ -181,6 +199,32 @@ private:
     // construction from linuxfbRotationOverride(); non-zero only on
     // linuxfb boards whose QPA plugin ignores ``rotation=N``.
     int imageRotation;
+
+    // Asset-to-asset transition. A solid black QWidget overlaying the
+    // whole view (parent=this, constructed before footerBar so it
+    // stacks *below* the footer ticker — see that field's own comment
+    // in view.cpp — the footer is persistent chrome, not part of what's
+    // transitioning). Its QGraphicsOpacityEffect is animated 0->1
+    // (reveal black, hiding whatever's about to change) then 1->0
+    // (reveal the new content) by the one persistent fadeAnimation
+    // below, rather than a *real* crossfade of the old and new content
+    // simultaneously on screen: issue #2954 (see the dual-webview
+    // comment in the constructor) is exactly what happens when this
+    // codebase keeps two live composited surfaces around at once on
+    // Qt6/Wayland/cage boards — a hidden/occluded QWebEngineView is
+    // frame-callback-throttled and can reveal a stale GPU frame.
+    // Fading a single opaque black widget over the *existing* surface
+    // sidesteps that whole bug class: there is only ever one thing
+    // rendering the "real" content at a time, this overlay just dims
+    // it.
+    QWidget* fadeOverlay;
+    QGraphicsOpacityEffect* fadeOpacityEffect;
+    QPropertyAnimation* fadeAnimation;
+    enum class FadePhase { Idle, FadingOut, FadingIn };
+    FadePhase fadePhase = FadePhase::Idle;
+    // Set by fadeToContent() for onFadeAnimationFinished() to run once
+    // the screen is fully black; cleared immediately after.
+    std::function<void()> pendingContentSwap;
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // QtMultimedia-backed video widget (issue #2904). Sibling of

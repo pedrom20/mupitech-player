@@ -417,6 +417,25 @@ View::View(QWidget* parent) : QWidget(parent)
     connect(pageLoadWatchdog, &QTimer::timeout,
             this, &View::handlePageLoadTimeout);
 
+    // Fade-through-black transition overlay — see its member comment
+    // in view.h for why this (a single opaque widget fading in/out)
+    // instead of a real crossfade. Built after webView1/webView2/
+    // videoView so it stacks above them, but before footerBar so the
+    // footer ticker stays on top and unaffected by asset transitions.
+    fadeOverlay = new QWidget(this);
+    fadeOverlay->setAttribute(Qt::WA_TransparentForMouseEvents);
+    fadeOverlay->setStyleSheet(QStringLiteral("background-color: black;"));
+    fadeOpacityEffect = new QGraphicsOpacityEffect(fadeOverlay);
+    fadeOpacityEffect->setOpacity(0.0);
+    fadeOverlay->setGraphicsEffect(fadeOpacityEffect);
+    fadeOverlay->setGeometry(rect());
+
+    fadeAnimation = new QPropertyAnimation(fadeOpacityEffect, "opacity", this);
+    fadeAnimation->setDuration(200);
+    fadeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+    connect(fadeAnimation, &QPropertyAnimation::finished,
+            this, &View::onFadeAnimationFinished);
+
     // Footer ticker bar (Fleet Manager's footer_messages module). Built
     // last so it stacks above webView1/webView2/videoView by Qt's
     // default child z-order, hidden until the first setFooter(true, …).
@@ -605,6 +624,48 @@ void View::stopAnimation()
         movie = nullptr;
     }
     isAnimatedImage = false;
+}
+
+void View::fadeToContent(std::function<void()> swapContent)
+{
+    // A fade already in flight — most likely assets are rotating
+    // faster than the fade duration (short display durations, or a
+    // slow board). Finish the current one synchronously (running its
+    // own queued swap right now, if it hadn't yet) rather than letting
+    // two overlapping animations fight over fadeOpacityEffect, then
+    // start the new fade-out from a clean, fully-known state (opaque
+    // black, nothing pending).
+    if (fadePhase != FadePhase::Idle) {
+        fadeAnimation->stop();
+        if (pendingContentSwap) {
+            auto previousSwap = pendingContentSwap;
+            pendingContentSwap = nullptr;
+            previousSwap();
+        }
+    }
+
+    pendingContentSwap = std::move(swapContent);
+    fadePhase = FadePhase::FadingOut;
+    fadeAnimation->setStartValue(fadeOpacityEffect->opacity());
+    fadeAnimation->setEndValue(1.0);
+    fadeAnimation->start();
+}
+
+void View::onFadeAnimationFinished()
+{
+    if (fadePhase == FadePhase::FadingOut) {
+        fadePhase = FadePhase::FadingIn;
+        if (pendingContentSwap) {
+            auto swap = pendingContentSwap;
+            pendingContentSwap = nullptr;
+            swap();
+        }
+        fadeAnimation->setStartValue(1.0);
+        fadeAnimation->setEndValue(0.0);
+        fadeAnimation->start();
+    } else {
+        fadePhase = FadePhase::Idle;
+    }
 }
 
 void View::loadPage(const QString &uri, bool skipSslVerify)
@@ -993,10 +1054,12 @@ void View::loadAsStaticImage(const QByteArray& data)
     if (!newImage.isNull()) {
         qDebug() << "Successfully loaded static image. Size:" << newImage.size();
         nextImage = newImage;
-        webView1->setVisible(false);
-        webView2->setVisible(false);
-        currentImage = nextImage;
-        update();
+        fadeToContent([this]() {
+            webView1->setVisible(false);
+            webView2->setVisible(false);
+            currentImage = nextImage;
+            update();
+        });
     } else {
         qDebug() << "Failed to load image from data:" << reader.errorString();
     }
@@ -1055,6 +1118,7 @@ void View::resizeEvent(QResizeEvent* event)
         videoView->setGeometry(rect());
     }
 #endif
+    fadeOverlay->setGeometry(rect());
     updateFooterGeometry();
 }
 
@@ -1094,9 +1158,13 @@ void View::playVideo(const QString &uri, const QVariantMap &options)
     videoView->setVisible(true);
     videoView->play(uri, options);
     // videoView->raise() above would otherwise put the video surface on
-    // top of the footer bar (and its logo) too — re-assert the footer's
-    // stacking order so a video asset doesn't briefly (or permanently)
-    // cover it.
+    // top of the footer bar (and its logo), and the fade overlay, too —
+    // re-assert their stacking order so a video asset doesn't briefly
+    // (or permanently) cover either. Video transitions aren't
+    // fade-wrapped themselves (see fadeToContent's call sites), but
+    // fadeOverlay must stay above videoView regardless, for whenever
+    // the *next* asset after this video is an image/page and fades in.
+    fadeOverlay->raise();
     footerBar->raise();
     footerLogoLabel->raise();
 }
@@ -1136,8 +1204,6 @@ void View::handleAuthRequest(const QUrl& requestUrl, QAuthenticator*)
 void View::setupAnimation()
 {
     isAnimatedImage = true;
-    webView1->setVisible(false);
-    webView2->setVisible(false);
 
     connect(movie, &QMovie::frameChanged, this, [this](int) {
         if (!movie || !isAnimatedImage) {
@@ -1151,10 +1217,18 @@ void View::setupAnimation()
         }
     });
 
-    movie->start();
-    movie->jumpToFrame(0);
-    currentImage = movie->currentImage();
-    update();
+    // Only the *first* frame's reveal fades — every later frame still
+    // goes straight through the frameChanged lambda above at the
+    // movie's own frame rate, untouched, or the GIF itself would
+    // visibly pulse on every frame instead of just playing.
+    fadeToContent([this]() {
+        webView1->setVisible(false);
+        webView2->setVisible(false);
+        movie->start();
+        movie->jumpToFrame(0);
+        currentImage = movie->currentImage();
+        update();
+    });
 }
 
 // Mirrors the v2 serializer's REFRESH_INTERVAL_S_MAX. Caps a hostile
@@ -1238,6 +1312,16 @@ void View::switchToNextWebView()
 
     nextWebViewReady = false;
 
+    // Note for both branches below: in single-view mode (the only mode
+    // today), QtWebEngine has typically already repainted the new page
+    // in place by the time this runs — the fade-out here briefly dims
+    // the *already-new* page rather than the old one in that specific
+    // case, since there is no hook earlier than loadFinished to catch
+    // it mid-navigation. Still reads as a deliberate transition between
+    // assets on screen either way, just not a byte-for-byte "old then
+    // new" sequence for page->page specifically — see fadeToContent's
+    // own doc comment on why this is fine (every other asset-type
+    // combination fades the real thing).
     if (currentWebView == nextWebView) {
         // Single-view mode (the only mode today — see the constructor).
         // There is no off-screen buffer to reveal: the freshly-loaded
@@ -1247,31 +1331,35 @@ void View::switchToNextWebView()
         // dual-buffer hide/show + pointer swap, which on a single
         // aliased widget would only toggle its visibility for no reason
         // (and risk an avoidable flicker).
-        currentWebView->setVisible(true);
-        currentWebView->clearFocus();
-        armReloadTimer();
+        fadeToContent([this]() {
+            currentWebView->setVisible(true);
+            currentWebView->clearFocus();
+            armReloadTimer();
+        });
         qDebug() << "Showing loaded web page (single-view)";
         return;
     }
 
     qDebug() << "Switching to next web view";
 
-    currentWebView->setVisible(false);
-    nextWebView->setVisible(true);
-    nextWebView->clearFocus();
+    fadeToContent([this]() {
+        currentWebView->setVisible(false);
+        nextWebView->setVisible(true);
+        nextWebView->clearFocus();
 
-    QWebEngineView* temp = currentWebView;
-    currentWebView = nextWebView;
-    nextWebView = temp;
+        QWebEngineView* temp = currentWebView;
+        currentWebView = nextWebView;
+        nextWebView = temp;
+
+        // The new page is now visible — safe to arm the auto-refresh
+        // timer against it. setReloadInterval may have been called
+        // while the load was in flight; it stashed the cadence in
+        // pendingReloadIntervalS and deferred to here. No-op if the
+        // asset didn't request auto-refresh.
+        armReloadTimer();
+    });
 
     qDebug() << "Successfully switched to next web view";
-
-    // The new page is now visible — safe to arm the auto-refresh
-    // timer against it. setReloadInterval may have been called while
-    // the load was in flight; it stashed the cadence in
-    // pendingReloadIntervalS and deferred to here. No-op if the asset
-    // didn't request auto-refresh.
-    armReloadTimer();
 }
 
 int View::footerBarHeight() const
