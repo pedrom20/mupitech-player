@@ -54,6 +54,7 @@ def test_get_device_settings(
         'footer_messages': '["Hello", "World"]',
         'footer_cycle_interval_minutes': 5,
         'footer_logo_url': 'https://fm.example.com/media/footer/footer-logo.png',
+        'transition_duration_ms': 200,
     }[key]
 
     response = api_client.get(device_settings_url)
@@ -81,6 +82,7 @@ def test_get_device_settings(
         'footer_messages': ['Hello', 'World'],
         'footer_cycle_interval_minutes': 5,
         'footer_logo_url': 'https://fm.example.com/media/footer/footer-logo.png',
+        'transition_duration_ms': 200,
     }
 
     for key, expected_value in expected_values.items():
@@ -379,6 +381,7 @@ def test_disable_basic_auth(
         'footer_messages': '[]',
         'footer_cycle_interval_minutes': 0,
         'footer_logo_url': '',
+        'transition_duration_ms': 200,
     }[key]
     settings_mock.__setitem__ = mock.MagicMock()
 
