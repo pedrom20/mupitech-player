@@ -12,6 +12,7 @@
 #include <QMovie>
 #include <QPair>
 #include <QPropertyAnimation>
+#include <QVariantAnimation>
 #include <QTimer>
 #include <QUrl>
 #include <QVariantMap>
@@ -27,6 +28,7 @@
 // hold a pointer without pulling the QtWebEngineCore interceptor headers
 // into every translation unit that includes view.h.
 class RequestHeaderInterceptor;
+class QPainter;
 
 class View : public QWidget
 {
@@ -87,6 +89,12 @@ signals:
 protected:
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
+    // Scales/rotates/paints ``image`` exactly like the old single-image
+    // paintEvent body used to, but at an arbitrary opacity and callable
+    // twice per paint — the building block both the normal (opacity 1)
+    // paint and the image->image crossfade (old then new, blended) are
+    // written in terms of. const: never mutates view state, just draws.
+    void drawScaledImage(QPainter& painter, const QImage& image, qreal opacity) const;
 
 private slots:
     void handleAuthRequest(const QUrl& requestUrl, QAuthenticator* authenticator);
@@ -105,6 +113,23 @@ private:
     // in hand, page already loaded) — never to bridge a network wait,
     // or the screen would sit black for however long that takes.
     void fadeToContent(std::function<void()> swapContent);
+    // Real crossfade for image->image — see crossfadeFromImage's own
+    // comment for why only this specific case gets one. Both images
+    // must already be fully decoded/ready; ``toImage`` becomes
+    // currentImage immediately (nothing defers it, unlike
+    // fadeToContent — there's no "screen is black" moment to hide a
+    // swap behind here, both frames are visible throughout). Takes
+    // ``fromImage`` explicitly rather than reading currentImage
+    // itself: setupAnimation's caller must snapshot it *before*
+    // calling QMovie::start(), which may synchronously fire
+    // frameChanged and overwrite currentImage with the new GIF's own
+    // first frame before this ever runs.
+    void startCrossfade(const QImage &fromImage, const QImage &toImage);
+    // True exactly when it's safe to crossfade into the next image
+    // instead of fading through black: both webviews are hidden (no
+    // webpage/video on screen) and something is actually currently
+    // painted (not the very first asset ever, nothing to fade *from*).
+    bool previousAssetWasImage() const;
     // Single persistent QPropertyAnimation's finished handler (see
     // fadeAnimation's own comment) — advances fadePhase from FadingOut
     // to FadingIn (running the queued swapContent then reversing the
@@ -225,6 +250,22 @@ private:
     // Set by fadeToContent() for onFadeAnimationFinished() to run once
     // the screen is fully black; cleared immediately after.
     std::function<void()> pendingContentSwap;
+
+    // Real crossfade for image->image only (no black flash) — a
+    // deliberately narrower case than fadeOverlay above. Both the
+    // outgoing and incoming frame are plain QImage paints (no
+    // QWebEngineView involved at all), so there is no analogue of
+    // #2954's stale-GPU-surface mechanism to worry about here: this
+    // is just two drawImage() calls blended by ordinary alpha
+    // compositing in one paintEvent, never two live composited
+    // widgets. loadAsStaticImage/setupAnimation only take this path
+    // when the *previous* on-screen content was itself a plain image
+    // (see their own call sites) — anything involving a webpage still
+    // goes through fadeToContent's fade-through-black above.
+    QImage crossfadeFromImage;
+    qreal crossfadeProgress = 0.0;
+    bool isCrossfading = false;
+    QVariantAnimation* crossfadeAnimation;
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // QtMultimedia-backed video widget (issue #2904). Sibling of

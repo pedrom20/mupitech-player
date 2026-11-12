@@ -436,6 +436,24 @@ View::View(QWidget* parent) : QWidget(parent)
     connect(fadeAnimation, &QPropertyAnimation::finished,
             this, &View::onFadeAnimationFinished);
 
+    // Real image->image crossfade (see crossfadeFromImage's own
+    // comment). QVariantAnimation rather than QPropertyAnimation since
+    // crossfadeProgress is a plain qreal member, not a Q_PROPERTY on
+    // some QObject to bind to.
+    crossfadeAnimation = new QVariantAnimation(this);
+    crossfadeAnimation->setDuration(250);
+    crossfadeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+    connect(crossfadeAnimation, &QVariantAnimation::valueChanged,
+            this, [this](const QVariant &value) {
+                crossfadeProgress = value.toReal();
+                update();
+            });
+    connect(crossfadeAnimation, &QVariantAnimation::finished, this, [this]() {
+        isCrossfading = false;
+        crossfadeFromImage = QImage();
+        update();
+    });
+
     // Footer ticker bar (Fleet Manager's footer_messages module). Built
     // last so it stacks above webView1/webView2/videoView by Qt's
     // default child z-order, hidden until the first setFooter(true, …).
@@ -649,6 +667,24 @@ void View::fadeToContent(std::function<void()> swapContent)
     fadeAnimation->setStartValue(fadeOpacityEffect->opacity());
     fadeAnimation->setEndValue(1.0);
     fadeAnimation->start();
+}
+
+bool View::previousAssetWasImage() const
+{
+    return !webView1->isVisible() && !webView2->isVisible() && !currentImage.isNull();
+}
+
+void View::startCrossfade(const QImage &fromImage, const QImage &toImage)
+{
+    crossfadeAnimation->stop();
+    crossfadeFromImage = fromImage;
+    currentImage = toImage;
+    crossfadeProgress = 0.0;
+    isCrossfading = true;
+    crossfadeAnimation->setStartValue(QVariant(0.0));
+    crossfadeAnimation->setEndValue(QVariant(1.0));
+    crossfadeAnimation->start();
+    update();
 }
 
 void View::onFadeAnimationFinished()
@@ -1054,29 +1090,32 @@ void View::loadAsStaticImage(const QByteArray& data)
     if (!newImage.isNull()) {
         qDebug() << "Successfully loaded static image. Size:" << newImage.size();
         nextImage = newImage;
-        fadeToContent([this]() {
-            webView1->setVisible(false);
-            webView2->setVisible(false);
-            currentImage = nextImage;
-            update();
-        });
+        if (previousAssetWasImage()) {
+            startCrossfade(currentImage, nextImage);
+        } else {
+            fadeToContent([this]() {
+                webView1->setVisible(false);
+                webView2->setVisible(false);
+                currentImage = nextImage;
+                update();
+            });
+        }
     } else {
         qDebug() << "Failed to load image from data:" << reader.errorString();
     }
 }
 
-void View::paintEvent(QPaintEvent*)
+void View::drawScaledImage(QPainter& painter, const QImage& image, qreal opacity) const
 {
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform);
-    painter.fillRect(rect(), Qt::black);
-
-    if (currentImage.isNull()) {
+    if (image.isNull() || opacity <= 0.0) {
         return;
     }
 
+    painter.save();
+    painter.setOpacity(opacity);
+
     if (imageRotation == 0) {
-        QSize scaledSize = currentImage.size();
+        QSize scaledSize = image.size();
         scaledSize.scale(size(), Qt::KeepAspectRatio);
         painter.drawImage(
             QRect(
@@ -1084,7 +1123,8 @@ void View::paintEvent(QPaintEvent*)
                 (height() - scaledSize.height()) / 2,
                 scaledSize.width(),
                 scaledSize.height()),
-            currentImage);
+            image);
+        painter.restore();
         return;
     }
 
@@ -1095,7 +1135,7 @@ void View::paintEvent(QPaintEvent*)
     // pillar-boxed, matching the GStreamer videoflip path.
     const QSize box =
         (imageRotation % 180 == 0) ? size() : QSize(height(), width());
-    QSize scaledSize = currentImage.size();
+    QSize scaledSize = image.size();
     scaledSize.scale(box, Qt::KeepAspectRatio);
     painter.translate(width() / 2.0, height() / 2.0);
     painter.rotate(imageRotation);
@@ -1105,7 +1145,29 @@ void View::paintEvent(QPaintEvent*)
             -scaledSize.height() / 2,
             scaledSize.width(),
             scaledSize.height()),
-        currentImage);
+        image);
+    painter.restore();
+}
+
+void View::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+    painter.fillRect(rect(), Qt::black);
+
+    // Real crossfade (issue: user wants no black flash between two
+    // images specifically) — see crossfadeFromImage's own comment in
+    // view.h for why this is only safe/attempted for image->image.
+    // Both the outgoing and incoming image are native QImage paints,
+    // nothing QWebEngineView-related, so none of #2954's stale-GPU-
+    // surface mechanism applies here.
+    if (isCrossfading) {
+        drawScaledImage(painter, crossfadeFromImage, 1.0 - crossfadeProgress);
+        drawScaledImage(painter, currentImage, crossfadeProgress);
+        return;
+    }
+
+    drawScaledImage(painter, currentImage, 1.0);
 }
 
 void View::resizeEvent(QResizeEvent* event)
@@ -1204,6 +1266,13 @@ void View::handleAuthRequest(const QUrl& requestUrl, QAuthenticator*)
 void View::setupAnimation()
 {
     isAnimatedImage = true;
+    // Snapshot before movie->start() below, which may synchronously
+    // emit frameChanged (connected right after) and overwrite
+    // currentImage with the new GIF's own first frame — see
+    // startCrossfade's own doc comment on why this can't just read
+    // currentImage itself at crossfade time.
+    const QImage previousImage = currentImage;
+    const bool wasImage = previousAssetWasImage();
 
     connect(movie, &QMovie::frameChanged, this, [this](int) {
         if (!movie || !isAnimatedImage) {
@@ -1217,18 +1286,24 @@ void View::setupAnimation()
         }
     });
 
-    // Only the *first* frame's reveal fades — every later frame still
-    // goes straight through the frameChanged lambda above at the
-    // movie's own frame rate, untouched, or the GIF itself would
-    // visibly pulse on every frame instead of just playing.
-    fadeToContent([this]() {
-        webView1->setVisible(false);
-        webView2->setVisible(false);
+    // Only the *first* frame's reveal fades/crossfades — every later
+    // frame still goes straight through the frameChanged lambda above
+    // at the movie's own frame rate, untouched, or the GIF itself
+    // would visibly pulse on every frame instead of just playing.
+    if (wasImage) {
         movie->start();
         movie->jumpToFrame(0);
-        currentImage = movie->currentImage();
-        update();
-    });
+        startCrossfade(previousImage, movie->currentImage());
+    } else {
+        fadeToContent([this]() {
+            webView1->setVisible(false);
+            webView2->setVisible(false);
+            movie->start();
+            movie->jumpToFrame(0);
+            currentImage = movie->currentImage();
+            update();
+        });
+    }
 }
 
 // Mirrors the v2 serializer's REFRESH_INTERVAL_S_MAX. Caps a hostile
